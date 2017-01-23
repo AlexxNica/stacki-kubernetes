@@ -1,0 +1,25 @@
+<?xml version="1.0" standalone="no"?>
+
+<graph>
+
+	<description>
+
+	The stacki-kubernetes Pallet
+
+	</description>
+
+	<si_copyright>
+	(c) 2006 - 2016 StackIQ Inc.
+	All rights reserved. stacki(r) v3.3 stacki.com
+	</si_copyright>
+
+	<order head="base" tail="stacki-kubernetes-base"/>
+	<edge from="base" to="stacki-kubernetes-base" />
+
+	<order head="server" tail="stacki-kubernetes-server"/>
+	<edge from="server" to="stacki-kubernetes-server" />
+
+	<order head="stacki-kubernetes-base" tail="stacki-kubernetes-backend"/>
+	<edge from="stacki-kubernetes-base" to="stacki-kubernetes-backend" />
+
+</graph>

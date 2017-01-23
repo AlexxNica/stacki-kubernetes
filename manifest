@@ -1,0 +1,6 @@
+etcd
+flannel
+kubernetes-client
+kubernetes-extras
+kubernetes-server
+roll-stacki-kubernetes-kickstart

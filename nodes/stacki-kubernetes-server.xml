@@ -1,0 +1,22 @@
+<?xml version="1.0" standalone="no"?>
+
+<kickstart>
+
+
+	<description>
+	Your stacki-k8 pallet description here
+	</description>
+
+	<si_copyright>
+	(c) 2006 - 2016 StackIQ Inc.
+	All rights reserved. stacki(r) v3.3 stacki.com
+	</si_copyright>
+
+<post>
+stack set appliance attr backend attr=kube.minion value=True
+stack set appliance attr backend attr=kube.master value=False
+stack add attr attr=etcd.cluster_member value=False
+stack set attr attr=sync.hosts value=True
+</post>
+
+</kickstart>
