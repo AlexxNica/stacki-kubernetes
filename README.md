@@ -1,3 +1,20 @@
+### tl;dr
+Really? You don't want to read this? It's the best README you'll ever encounter. 
+
+Ok, fine.
+
+Download these;
+
+Install them
+
+Enable them
+
+Add spreadsheet.
+
+Install backend nodes.
+
+
+
 ### Prologue
 ============
 
@@ -21,7 +38,8 @@ This is a Phase 1 project. A Phase 1 project for us means: it's going to work, a
 
 As in, you need these to make this work. If you don't have all of these, it won't work.
 
-- [stacki-os 3.2](https://s3.amazonaws.com/stacki/3.x/stacki-os-3.2-7.x.x86_64.disk1.iso)
+- [stacki-os 3.2](https://s3.amazonaws.com/stacki/3.x/stacki-os-3.2-7.x.x86_64.disk1.iso) (If you already have a Stacki 3.2 frontend up, you don't need this again.)
+
 - [CentOS-7.2](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-7-x86_64-Everything-1511.iso)
 - [CentOS-7.2 Updates](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-Updates-7.2-0.x86_64.disk1.iso)
 - [stacki-docker](https://s3.amazonaws.com/stacki/public/pallets/3.2/open-source/stacki-docker-1.13.0-7.x.x86_64.disk1.iso)
