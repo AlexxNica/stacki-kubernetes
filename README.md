@@ -16,24 +16,36 @@ and drink the first couple of cups. <sup name="a3">[3](#f3)</sup>
 The stacki-kubernetes pallet installed on top of Stacki, will give you a functioning Kubernetes cluster.
 
 This is a Phase 1 project. A Phase 1 project for us means: it's going to work, at least as good as what you currently have, and possibly simpler or better than what you currently have,<sup name="a4">[4](#f4)</sup> but it will work. You'll be able to install backend nodes with the current stable version of Kubernetes and run your, or public, containers. 
- 
-### Current versions and software stack:
+
+### Requirements
+
+As in, you need these to make this work. If you don't have all of these, it won't work.
+
 - [stacki-os 3.2](https://s3.amazonaws.com/stacki/3.x/stacki-os-3.2-7.x.x86_64.disk1.iso)
 - [CentOS-7.2](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-7-x86_64-Everything-1511.iso)
 - [CentOS-7.2 Updates](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-Updates-7.2-0.x86_64.disk1.iso)
 - [stacki-docker](https://s3.amazonaws.com/stacki/public/pallets/3.2/open-source/stacki-docker-1.13.0-7.x.x86_64.disk1.iso)
 - [stacki-kubernetes](http://stacki.s3.amazonaws.com/public/pallets/3.2/open-source/stacki-kubernetes-1.5.2-7.x_p1.x86_64.disk1.iso)
+- You'll need a spreadsheet, an example files in the document. Hopefully a link too.
 
+You should download these. If you have a Stacki frontend up already, download these to /export which should be the biggest partition on the frontend.
 
-### Requirements
-On bare metal. 
+### Versions (all latest stable)
+- Docker 1.13
+- Kubernetes 1.5.2
+- etcd 3.1.0
+- flannel 0.7.0
+
+This is the current default stack. Phase 1 only uses these. Phase 2 will have more options. See the Caveats section.
 
 ### Caveats
-This is what it doesn't have - yet. T
-It doesn't do rkt yet.
-It doesn't do any overlay network except flannel yet.
-It does not have TLS authentication
+This is what it doesn't have - yet. If you have opinions on what should be in Phase 2, make it know on the googlegroups or on the Stacki Slack channel.
 
+- rkt (Really? Go away and leave me alone.)
+- The only overlay network currently supported is flannel.
+- No TLS, nothing secured except by your network. 
+- docker registry runs with "--insecure-registry"
+- No DevOps tools used, just straight kickstart. If you've seen 
 The only service running in a container is a docker registry if you want it.
 
 It's promiscuous: nothing is nailed down with tls certs yet, or put it on a closed network, but that brings it's own challenges.
