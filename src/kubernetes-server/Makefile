@@ -55,11 +55,10 @@ build::
 
 install::
 	mkdir -p $(ROOT)$(PKGROOT)/images
-	tar --strip-components=2 -xf $(NAME)-linux-amd64.$(TGZ) \
+	mkdir -p $(ROOT)/etc/profile.d/
+	tar --strip-components=2 -xf $(TGZNAME) \
 		-C $(ROOT)$(PKGROOT)
-	mv $(ROOT)$(PKGROOT)/bin/*.tar $(ROOT)$(PKGROOT)/images
-	mv $(ROOT)$(PKGROOT)/bin/*.docker_tag $(ROOT)$(PKGROOT)/images
-#	tar --strip-components=2 --exclude="*.tar" --exclude "*.docker_tag" \
-		-xf $(NAME)-linux-amd64.$(TGZ) -C $(ROOT)$(PKGROOT)
+	$(INSTALL) -m644 kubernetes.sh $(ROOT)/etc/profile.d
+	$(INSTALL) -m644 kubernetes.csh $(ROOT)/etc/profile.d
 
-clean::
+#clean::

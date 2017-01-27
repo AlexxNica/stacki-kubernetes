@@ -15,9 +15,9 @@ Kubernetes pallet backend base
 
 <!-- workaround for overlayfs xfs issues in RHEL -->
 <pre cond="&nukedisks;">
-parted -s /dev/sdb 'mklabel gpt' &gt; /root/parted.log 2&gt;&amp;1
-parted -s /dev/sdb 'mkpart primary xfs 1 -1' &gt; /root/parted.log 2&gt;&amp;1
-mkfs.xfs /dev/sdb1 -L xfs -n ftype=1 -f &gt; /root/parted.log 2&gt;&amp;1
+parted -s /dev/&docker.overlay_disk; 'mklabel gpt' &gt; /root/parted.log 2&gt;&amp;1
+parted -s /dev/&docker.overlay_disk; 'mkpart primary xfs 1 -1' &gt; /root/parted.log 2&gt;&amp;1
+mkfs.xfs /dev/&docker.overlay_disk; 1 -L xfs -n ftype=1 -f &gt; /root/parted.log 2&gt;&amp;1
 </pre>
 
 <!-- general -->
@@ -30,10 +30,13 @@ net.ipv4.ip_forward = 1
 
 mkdir -p /var/lib/docker
 
+</post>
+
+<post cond="&nukedisks;">
 export BLKID=`blkid /dev/sdb1 | awk '{print $3}' | sed "s/\"//g"` 
 echo "${BLKID} /var/lib/docker    xfs     defaults        0 0" &gt;&gt; /etc/fstab
-
 </post>
+
 
 <post cond="sync.hosts">
 <file name="/tmp/hosts">
@@ -284,7 +287,19 @@ systemctl enable flanneld
 <!-- docker with flannel -->
 
 mkdir -p /etc/systemd/system/docker.service.d
-
+systemctl enable docker
+</post>
+<post cond="&docker.registry.local;"> 
+<file name="/etc/systemd/system/docker.service.d/override.conf">
+[Service]
+EnvironmentFile=-/etc/sysconfig/docker-network
+ExecStart=
+ExecStart=/usr/bin/dockerd --storage-driver=overlay $DOCKER_OPTS --insecure-registry &kube.master_ip;:5000
+Restart=always
+RestartSec=10
+</file>
+</post>
+<post cond="&docker.registry.external;"> 
 <file name="/etc/systemd/system/docker.service.d/override.conf">
 [Service]
 EnvironmentFile=-/etc/sysconfig/docker-network
@@ -293,7 +308,6 @@ ExecStart=/usr/bin/dockerd --storage-driver=overlay $DOCKER_OPTS
 Restart=always
 RestartSec=10
 </file>
-systemctl enable docker
 </post>
 
 <post>

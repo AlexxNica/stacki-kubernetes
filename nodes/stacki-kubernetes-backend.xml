@@ -9,6 +9,9 @@ Kubernetes client
 <package>kubernetes-server</package>
 <package>kubernetes-extras</package>
 <package>kubernetes-client</package>
+<package>socat</package>
+<package cond="&kube.master;">kubernetes-images</package>
+<package cond="&kube.master;">firefox</package>
 
 <post>
 useradd kubeadmin
@@ -31,7 +34,7 @@ After=network.target
 [Service]
 EnvironmentFile=-/opt/kubernetes/etc/config
 EnvironmentFile=-/opt/kubernetes/etc/proxy
-ExecStart=/opt/kubernetes/bin/kube-proxy \
+ExecStart=/opt/kubernetes/bin/kube-proxy --masquerade-all \
 	    ${KUBE_LOGTOSTDERR} \
 	    ${KUBE_LOG_LEVEL} \
 	    ${KUBE_MASTER} \
@@ -169,7 +172,7 @@ KUBE_API_PORT="--port=8080"
 # How the replication controller and scheduler find the kube-apiserver
 KUBE_MASTER="--master=http://&kube.master_ip;:8080"
 
-KUBE_ETCD_SERVERS="--etcd_servers=http://127.0.0.1:2379"
+KUBE_ETCD_SERVERS="--etcd_servers=http://&kube.master_ip;:2379"
 
 # Port kubelets listen on
 KUBELET_PORT="--kubelet-port=10250"
@@ -215,6 +218,90 @@ WantedBy=multi-user.target
 
 systemctl enable kube-apiserver kube-controller-manager kube-scheduler kube-dns
 </post>
+<post cond="&docker.registry.local;">
+<file name="/opt/kubernetes/pods/kubernetes-dashboard.yaml">
+# Copyright 2015 Google Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Configuration to deploy release version of the Dashboard UI.
+#
+# Example usage: kubectl create -f this_file
+
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  labels:
+    app: kubernetes-dashboard
+  name: kubernetes-dashboard
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubernetes-dashboard
+  template:
+    metadata:
+      labels:
+        app: kubernetes-dashboard
+      # Comment the following annotation if Dashboard must not be deployed on master
+      annotations:
+        scheduler.alpha.kubernetes.io/tolerations: |
+          [
+            {
+              "key": "dedicated",
+              "operator": "Equal",
+              "value": "master",
+              "effect": "NoSchedule"
+            }
+          ]
+    spec:
+      containers:
+      - name: kubernetes-dashboard
+        image: &kube.master_ip;:5000/kubernetes-dashboard
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 9090
+          protocol: TCP
+        args:
+          # Uncomment the following line to manually specify Kubernetes API server Host
+          # If not specified, Dashboard will attempt to auto discover the API server and connect
+          # to it. Uncomment only if the default does not work.
+          - --apiserver-host=http://&kube.master_ip;:8080
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 9090
+          initialDelaySeconds: 30
+          timeoutSeconds: 30
+---
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    app: kubernetes-dashboard
+  name: kubernetes-dashboard
+  namespace: kube-system
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    targetPort: 9090
+  selector:
+    app: kubernetes-dashboard
+
+</file>
+</post>
 
 <post>
 <file name="/opt/kubernetes/etc/kubelet">
@@ -229,15 +316,71 @@ KUBELET_HOSTNAME="--hostname-override=&hostaddr;"
 
 # Location of the api-server
 KUBELET_API_SERVER="--api_servers=http://&kube.master_ip;:8080"
+KUBE_CLUSTER_DNS="--cluster-dns=&kube.master_ip;"
+KUBE_CLUSTER_DOMAIN="--cluster-domain=kube.local"
+</file>
 
+<file name="/usr/lib/systemd/system/kubelet.service">
+[Unit]
+Description=Kubernetes Kubelet Server
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+After=docker.service
+Requires=docker.service
+
+[Service]
+WorkingDirectory=/var/lib/kubelet
+EnvironmentFile=-/opt/kubernetes/etc/config
+EnvironmentFile=-/opt/kubernetes/etc/kubelet
+ExecStart=/opt/kubernetes/bin/kubelet \
+        ${KUBE_LOGTOSTDERR} \
+        ${KUBE_LOG_LEVEL} \
+        ${KUBELET_API_SERVER} \
+        ${KUBELET_ADDRESS} \
+        ${KUBELET_PORT} \
+        ${KUBELET_HOSTNAME} \
+        ${KUBE_ALLOW_PRIV} \
+        ${KUBE_CLUSTER_DNS} \
+        ${KUBE_CLUSTER_DOMAIN} \
+        ${KUBELET_ARGS}
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+</file>
+</post>
+
+<post cond="&docker.registry.local;">
+<file name="/opt/kubernetes/etc/kubelet" mode="append">
+# Add your own!
+KUBELET_ARGS="--pod-infra-container-image=&kube.master_ip;:5000/pause-amd64:3.0"
+</file>
+</post>
+
+<post cond="&docker.registry.external;">
+<file name="/opt/kubernetes/etc/kubelet" mode="append">
 # Add your own!
 KUBELET_ARGS=""
 </file>
 </post>
 
-<post>
-wget -r --no-parent -nd -P /opt/kubernetes/pods --reject='index.html*' http://&Kickstart_PrivateAddress;/install/carts/kubernetes/files/pods/
+<post cond="&kube.pull_pods;">
+wget -q -nc -r --no-parent -nd -P /opt/kubernetes/pods --reject='index.html*' http://&Kickstart_PrivateAddress;/&kube.pod_dir;
 </post>
+
+<boot order="post" cond="&kube.master; and &docker.registry.local;">
+/usr/bin/docker load -i /opt/kubernetes/images/registry2.tar
+/usr/bin/docker load -i /opt/kubernetes/images/kubernetes-dashboard.tar
+/usr/bin/docker load -i /opt/kubernetes/images/pause-amd64.tar
+/usr/bin/docker run -d -p 5000:5000 --restart=always --name registry registry:2
+/usr/bin/docker tag gcr.io/google_containers/kubernetes-dashboard-amd64:v1.5.1 &kube.master_ip;:5000/kubernetes-dashboard:v1.5.1
+/usr/bin/docker push &kube.master_ip;:5000/kubernetes-dashboard:v1.5.1
+/usr/bin/docker tag gcr.io/google_containers/pause-amd64:3.0 &kube.master_ip;:5000/pause-amd64:3.0
+/usr/bin/docker push &kube.master_ip;:5000/pause-amd64:3.0
+</boot>
+
+<boot order="post" cond="&docker.registry.local;">
+/usr/bin/docker pull &kube.master_ip;:5000/kubernetes-dashboard:v1.5.1
+</boot>
 
 <boot order="post" cond="&kube.enable_dashboard;">
 /opt/kubernetes/bin/kubectl create -f /opt/kubernetes/pods/kubernetes-dashboard.yaml

@@ -17,6 +17,16 @@ stack set appliance attr backend attr=kube.minion value=True
 stack set appliance attr backend attr=kube.master value=False
 stack add attr attr=etcd.cluster_member value=False
 stack set attr attr=sync.hosts value=True
+mkdir -p /var/www/html/install/kubernetes/pods
+
+
+</post>
+
+<!-- you'll have to fix the network here -->
+<post cond="&docker.registry.external;">
+stack add host firewall frontend action=MASQUERADE chain=POSTROUTING output-network=public protocol=all rulename=MASQUERADE service=all table=nat
+stack add host firewall kaiza chain=FORWARD  output-network=private network=public protocol=all rulename=FORWARD_PUB service=all table=filter action=ACCEPT
+stack add host firewall kaiza chain=FORWARD  output-network=public network=private protocol=all rulename=FORWARD_PRIV service=all table=filter action=ACCEPT
 </post>
 
 </kickstart>
