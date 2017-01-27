@@ -65,9 +65,93 @@ This is what it doesn't have - yet. If you have opinions on what should be in Ph
 - The only overlay network currently supported is flannel.
 - No TLS, nothing secured except by your network. 
 - docker registry runs with "--insecure-registry"
-- No DevOps tools used, just straight kickstart. If you've seen any of the Kubernetes documentation, there are multiple ways to skin this particular software cat. We aren't doing those. If you want, you can just use Stacki to get the machines to a ping and a prompt and then use another/other tools for deploying Kubernetes. But then, you're not running it on bare metal anymore if that's a priority for you.
+- No DevOps tools used, just straight kickstart.<sup name="a5">[5](#f5)</sup> So if you've seen the Stacki+Kubernetes+Salt video demo, that's not valid anymore. Salt is not in Stacki unless you put it there. 
 - The only service running in a container is a docker registry if you want it.
 
+## Installing Kubernetes
+
+### Prepare the stacki frontend
+
+The installation of Kubernetes and subsequent deployment of you cluster requires:
+
+* A working stacki frontend with nodes installed.
+* The stacki-docker pallet
+* The stacki-kubernetes pallet
+* The CentOS-7.2 and CentOS-updates pallets.
+
+Luckily, we have made this easy for you.
+
+1. First install a stacki frontend.
+This has been documented [before](https://github.com/StackIQ/stacki/wiki/Frontend-Installation). If you're on this documentation, 
+you have already installed a frontend. If you are here without a stacki frontend. Go install one. Then come back. 
+I can wait...(Are we there yet?)
+
+2. Install the pallets.
+On your frontend, either download, or add/enable if they have been downloaded already.
+
+If downloading to the frontend:
+```
+# cd /export
+
+# wget --no-check-certificate https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-7-x86_64-Everything-1511.iso https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-Updates-7.2-0.x86_64.disk1.iso https://s3.amazonaws.com/stacki/public/pallets/3.2/open-source/stacki-docker-1.13.0-7.x.x86_64.disk1.iso http://stacki.s3.amazonaws.com/public/pallets/3.2/open-source/stacki-kubernetes-1.5.2-7.x_p1.x86_64.disk1.iso 
+
+Either all at once or one at a time.
+
+Check the md5sums.
+
+# md5sum stacki-kubernetes-1.5.2-7.x_p1.x86_64.disk1.iso stacki-docker-1.13.0-7.x.x86_64.disk1.iso
+
+against the following:
+
+cc4eac50e97dc0169751a2267409b00e  stacki-docker-1.13.0-7.x.x86_64.disk1.iso
+eaee67dc91ad35ebf6a5525e84747661  stacki-kubernetes-1.5.2-7.x_p1.x86_64.disk1.iso
+
+
+```
+
+If we have actually put this into S3 somewhere:
+```
+# wget * the iso
+
+Add and then add and enable the pallet:
+
+# stack add pallet stacki-hdp-pallet*.iso
+# stack list pallet 
+
+to make sure it's present
+
+Then enable it:
+
+# stack enable pallet stacki-hdp-pallet
+```
+
+or clone,build, add, and enable
+```
+# git clone this https://github.com/StackIQ/stacki-hdp-bridge.git
+# cd stacki-hdp-bridge
+# make
+
+Add and enable:
+# stack add pallet build-stacki-hdp-bridge-master/stacki-hdp-pallet*.iso
+# stack enable pallet stacki-hdp-pallet
+```
+
+Now run it. A pallet generally has both frontend and backend configuration. To get the frontend configuration to happen for a pallet that contains it, run the pallet
+```
+# stack run pallet stacki-hdp-bridge
+```
+To see what scripts are going to run. 
+
+Then run it for real:
+```
+# stack run pallet stacki-hdp-bridge | bash
+```
+The hdp-bridge pallet creates an ambari appliance, some key/value pairs (attributes), and sets-up a directory for getting the HDP repository you want. 
+
+First install a frontend. If you haven't, go to this documentation, which is still mostly accurate for 
+% Download all of these:
+
+### What you get
 ### tl;dr
 
 <h6>Footnotes:</h6>
@@ -76,6 +160,8 @@ This is what it doesn't have - yet. If you have opinions on what should be in Ph
 
 <sup name="f2">[2](#a2)</sup> Did you see what I did there? I plagarized 93% of the above footnote which I had previously plagarized.
 
-<sup name="a3">[3](#f3)</sup> Really, mostly if you have your act together and read this documentation. The first few times you install Stacki, it's not gonna do what you think it should. There's a learning curve, though not as steep as Cobbler/Satellite/Spacewalk, or, my God, Ironic. 
+<sup name="f3">[3](#a3)</sup> Really, mostly if you have your act together and read this documentation. The first few times you install Stacki, it's not gonna do what you think it should. There's a learning curve, though not as steep as Cobbler/Satellite/Spacewalk, or, my God, Ironic. 
 
-<sup name="a4">[4](#f4)</sup> If you currently have nothing, this will definitely work better than what you have. 
+<sup name="f4">[4](#a4)</sup> If you currently have nothing, this will definitely work better than what you have. 
+
+<sup name="f5">[5](#a5)</sup> If you've seen any of the Kubernetes documentation, there are multiple ways to skin this particular software cat. We aren't doing those. If you want, you can just use Stacki to get the machines to a ping and a prompt and then use another/other tools for deploying Kubernetes. But then, you're not running it on bare metal anymore if that's a priority for you.
