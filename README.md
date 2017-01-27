@@ -1,3 +1,6 @@
+Hey, if you just showed up here this weekend. The docs are still being written, because, well, you know. Check on Monday.
+
+
 ### tl;dr
 Really? You don't want to read this? It's the best README you'll ever encounter. 
 
