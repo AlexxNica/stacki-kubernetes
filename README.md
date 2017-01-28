@@ -143,11 +143,13 @@ Then run it for real:
 
 It's our assumption that you have already installed backend nodes with Stacki. Now you want Kubernetes, and you're going to reinstall the backend nodes. Yes, you are, or you're going to look for a different solution.
 
-If you haven't installed backend nodes, I highly recommend installing them with the base installation to shake out any hardware problems and know that they are going to work. Do this before enabling the stacki-docker and stacki-kubernetes pallets. You don't have to, but it's highly recommended. Then install them after adding a spreadsheet for some required attributes, and reinstall them. The reinstalling them is the short part of this.
+If you haven't installed backend nodes, I highly recommend installing them with the base installation to shake out any hardware problems and know that they are going to work. Do this before enabling the stacki-docker and stacki-kubernetes pallets. You don't have to, but it's highly recommended. Then enable/re-enable stacki-kubernetes and stacki-docker after adding a spreadsheet for some required attributes, and reinstall the nodes. The reinstalling nodes is the short part of this.
 
-If you haven't installed backend, and you have a host spreadsheet. (See the [Backend Install](https://github.com/StackIQ/stacki/wiki/Backend-Installation) section of our docs.) You can add the following attrfile before installation, but there's more to troubleshoot if something goes wrong. 
+If you haven't installed backend, and you have a host spreadsheet. (See the [Backend Install](https://github.com/StackIQ/stacki/wiki/Backend-Installation) section of our docs.) You  attrfile before installation, but there's more to troubleshoot if something goes wrong. 
 
-So in any event, we assume you have backend nodes. They don't have kubernetes on them and you're going to reinstall. 
+So in any event, we assume you have backend nodes. They don't have kubernetes on them and you're going to reinstall. You have to add the following attr file. The hostnames may need to change because "backend-?-?" is the default and you may have different host names.
+
+So to create your attrfile, just adapt the example here and add them. After the spreadsheet, we'll go through what this means. However, if this is the first time you've encountered a spreadsheet attribute file, go review this here which apparently I'm now writing also.
 
 Do the following:
 
@@ -158,16 +160,18 @@ wget stacki-kubernetes/spreadsheets/kubernetes-attrs.csv
 ```
 Open it with your favorite editor<sup name="a6">[6](#f6)</sup>, Excel/Libre Office/etc.
 
-It looks like [this](../stacki-kubernetes/spreadsheets/kubernetes-attrs.csv)
+It looks like [this](https://github.com/StackIQ../stacki-kubernetes/spreadsheets/kubernetes-attrs.csv)
 
 |  target     | kube.master | kube.master_ip  | kube.minion | etcd.prefix     | etcd.cluster_member  | kube.enable_dashboard  | kube.pull_pods  | kube.pod_dir            | docker.registry.local | docker.registry.external | docker.overlay_disk  | sync.hosts |
 | ----------- | ----------- | --------------- | ----------- | --------------- | -------------------- | ---------------------- | --------------- | ----------------------- | --------------------- | ------------------------ | -------------------- | ---------- |
 | global      | False       | 10.1.255.254    | True        | /stacki/network | False                | False                  | True            | install/kubernetes/pods | False                 | True                     | sdb                  | True       |
-| backend-0-0 | True        |                 |             |                 | True                 | True                   |                 |                         |                       |                          |                      |            |
+| backend=0-0 | True        |                 |             |                 | True                 | True                   |                 |                         |                       |                          |                      |            |
 | backend-0-1 |             |                 |             |                 | True                 |                        |                 |                         |                       |                          |                      |            |
 | backend-0-2 |             |                 |             |                 | True                 |                        |                 |                         |                       |                          |                      |            |
 | backend-0-3 |             |                 |             |                 |                      |                        |                 |                         |                       |                          |                      |            |
 | backend-0-4 |             |                 |             |                 |                      |                        |                 |                         |                       |                          |                      |            |
+
+
 
 
 <h6>Footnotes:</h6>
