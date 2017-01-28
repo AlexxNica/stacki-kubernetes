@@ -156,11 +156,11 @@ Do the following:
 Get the example spreadsheet file from the repository:
 
 ```
-wget stacki-kubernetes/spreadsheets/kubernetes-attrs.csv
+wget https://github.com/StackIQ/stacki-kubernetes/blob/master/spreadsheets/kubernetes-attrs.csv
 ```
 Open it with your favorite editor<sup name="a6">[6](#f6)</sup>, Excel/Libre Office/etc.
 
-It looks like [this](https://github.com/StackIQ../stacki-kubernetes/spreadsheets/kubernetes-attrs.csv)
+It looks like [this](https://github.com/StackIQ/stacki-kubernetes/blob/master/spreadsheets/kubernetes-attrs.csv)
 
 |  target         | kube.master | kube.master_ip  | kube.minion | etcd.prefix     | etcd.cluster_member  | kube.enable_dashboard  | kube.pull_pods  | kube.pod_dir            | docker.registry.local | docker.registry.external | docker.overlay_disk  | sync.hosts |
 | --------------- | ----------- | --------------- | ----------- | --------------- | -------------------- | ---------------------- | --------------- | ----------------------- | --------------------- | ------------------------ | -------------------- | ---------- |
@@ -172,6 +172,74 @@ It looks like [this](https://github.com/StackIQ../stacki-kubernetes/spreadsheets
 | backend-0-4     |             |                 |             |                 |                      |                        |                 |                         |                       |                          |                      |            |
 
 
+The goal here is to edit this file so that it reflects your site and needs, not mine. Since there isn't currently a page to describe attributes and what they are used for, I will do so here.
+
+Actually, I sum up, then I write the attributes documentation.
+
+###### Sum up attributes
+
+* Attributes in Stacki nomenclature are just key/value pairs stored in a database. 
+
+* Stacki defines a set of attributes that are used in creating kickstart for backend nodes. It's why they are generated dynamically and can be different depending on the role a node might play. You can use these.
+
+* Attributes can be arbitrarily created, meaning that you can create your own and use them for customization.
+
+* Attributes can be set on the command line or in an attributes file.
+
+* Attributes are inherited. The can be set at a global level, "G", an appliance level, "A", or individual host level, "B". The last one wins.
+
+###### Attrfile example
+
+We'll use the attribute file above to explain how attributes get into the database.
+
+The first line is "target." This is the header in the csv file. The keyword "target" means that everything that follows on this line is the attribute name - it is the "key" part in the key/value pair.
+
+The next line has a scope called "global." This means all the values after the word "global" are the default values of the key they map to in the above line, and they will be set at the global level. They apply to all nodes.
+
+The next five lines are applicable to only the name of the node at the beginning of the line. We only change those values for any given host that are different from the global setting. This way we have less typing. If a value is not set, it gets the global value.
+
+To add the attributes you load the attrfile after you edit it:
+
+```
+# stack load attrfile file=kubernetes.csv
+```
+
+You can also add/set attributes on the command line. The above file would look like this if we did it on the command line instead:
+```
+# stack add attr attr=docker.overlay_disk value=sdb
+# stack add attr attr=docker.registry.external value=True
+# stack add attr attr=docker.registry.local value=False
+# stack add attr attr=etcd.cluster_member value=False
+# stack add attr attr=etcd.prefix value=/stacki/network
+# stack add attr attr=kube.enable_dashboard value=False
+# stack add attr attr=kube.master value=False
+# stack add attr attr=kube.master_ip value=10.1.255.254
+# stack add attr attr=kube.minion value=True
+# stack add attr attr=kube.pod_dir value=install.kubernetes.pods
+# stack add attr attr=kube.pull_pods value=True
+# stack add attr attr=ssh.use_dns value=false
+# stack add attr attr=sync.hosts value=True
+# stack add attr attr=user.auth value=unix
+# stack add host attr backend-0-0 attr=etcd.cluster_member value=True
+# stack add host attr backend-0-0 attr=kube.enable_dashboard value=True
+# stack add host attr backend-0-0 attr=kube.master value=True
+# stack add host attr backend-0-1 attr=etcd.cluster_member value=True
+# stack add host attr backend-0-2 attr=etcd.cluster_member value=True
+```
+
+You can use "set" instead of "add." If the attribute doesn't exist if you use "set," it will be created. "add" just adds and sets.
+Use "set" when you want to change an attribute but don't want to reload the attr file.
+
+###### Kubernetes file detail
+
+At this point we'll go through the keys we are using and I'll tell you what they are for. You'll need to configure these for your site and change them in the attrfile and then load it.
+
+The format I'll discuss them in is:
+```
+Target:default global value 
+Used for:
+Hosts changed:
+```
 
 
 <h6>Footnotes:</h6>
