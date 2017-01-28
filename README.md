@@ -1,5 +1,5 @@
-Hey, if you just showed up here this weekend. The docs are still being written, because, well, you know. Check on Monday.
 
+# Stacki+Kubernetes Cluster Install
 
 ### tl;dr
 Really? You don't want to read this? It's the best README you'll ever encounter. 
@@ -438,6 +438,45 @@ stack sync host firewall &hostname; restart=true
 ```
 
 You should be able to ping google.com from any backend node. If not, get on the list and we'll help you work through the problem. 
+
+### Back to installing
+
+Now that you've set up your attrfile, load it:
+
+```
+# stack load attrfile file=kubernetes-attrs.csv
+
+```
+
+* Install backend nodes.
+```
+# stack set host boot backend action=install
+# stack set host attr backend attr=nukedisks value=True
+
+This is going to wipe the disks. 
+
+Reboot your nodes. Wait. 
+```
+
+* Access
+```
+# ssh <master node>
+
+List pods:
+
+# kubectl -n kube-system get pods
+
+Port forward the name of the pod to access the Kubernetes Dashboard.
+
+# kubectl -n kube-system port-forward <pod name> 9090
+
+From your laptop ssh port forward:
+
+# ssh -L 9090:127.0.0.1:9090 root@10.1.255.254
+
+Go to http://127.0.0.1:9090 in a browser.
+```
+
 
 ##### Proposed changes in no particular order
 * You oughta be able to install with CoreOS too.
