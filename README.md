@@ -123,6 +123,10 @@ to make sure everything is present.
 Then enable the pallets
 # stack enable pallet CentOS CentOS-Updates stacki-docker stacki-kubernetes
 
+You MUST disable the OS pallet:
+
+# stack disable pallet os
+
 ```
 
 A pallet generally has both frontend and backend configuration. To get the frontend configuration to happen for a pallet that contains it, run the pallet:
@@ -135,7 +139,25 @@ Then run it for real:
 ```
 # stack run pallet stacki-kubernetes | bash
 ```
+### Preparing backend nodes.
 
+It's our assumption that you have already installed backend nodes with Stacki. Now you want Kubernetes, and you're going to reinstall the backend nodes. Yes, you are, or you're going to look for a different solution.
+
+If you haven't installed backend nodes, I highly recommend installing them with the base installation to shake out any hardware problems and know that they are going to work. Do this before enabling the stacki-docker and stacki-kubernetes pallets. You don't have to, but it's highly recommended. Then install them after adding a spreadsheet for some required attributes, and reinstall them. The reinstalling them is the short part of this.
+
+If you haven't installed backend, and you have a host spreadsheet. (See the [Backend Install](https://github.com/StackIQ/stacki/wiki/Backend-Installation) section of our docs.) You can add the following attrfile before installation, but there's more to troubleshoot if something goes wrong. 
+
+So in any event, we assume you have backend nodes. They don't have kubernetes on them and you're going to reinstall. 
+
+Do the following:
+
+Get the example spreadsheet file from the repository:
+```
+wget stacki-kubernetes/spreadsheets/kubernetes-attrs.csv
+```
+Open it with your favorite editor or Excel/Libre Office/etc.
+
+It looks like [this](stacki-kubernetes/spreadsheets/kubernetes-attrs.csv)
 
 
 <h6>Footnotes:</h6>
