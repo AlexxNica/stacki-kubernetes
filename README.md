@@ -93,66 +93,50 @@ If downloading to the frontend:
 ```
 # cd /export
 
-# wget --no-check-certificate https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-7-x86_64-Everything-1511.iso https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-Updates-7.2-0.x86_64.disk1.iso https://s3.amazonaws.com/stacki/public/pallets/3.2/open-source/stacki-docker-1.13.0-7.x.x86_64.disk1.iso http://stacki.s3.amazonaws.com/public/pallets/3.2/open-source/stacki-kubernetes-1.5.2-7.x_p1.x86_64.disk1.iso 
+# wget --no-check-certificate https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-7-x86_64-Everything-1511.iso 
+# wget --no-check-certificate https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-Updates-7.2-0.x86_64.disk1.iso
+# wget --no-check-certificate https://s3.amazonaws.com/stacki/public/pallets/3.2/open-source/stacki-docker-1.13.0-7.x.x86_64.disk1.iso 
+# wget --no-check-certificate http://stacki.s3.amazonaws.com/public/pallets/3.2/open-source/stacki-kubernetes-1.5.2-7.x_p1.x86_64.disk1.iso 
+```
 
 Either all at once or one at a time.
 
 Check the md5sums.
-
+```
 # md5sum stacki-kubernetes-1.5.2-7.x_p1.x86_64.disk1.iso stacki-docker-1.13.0-7.x.x86_64.disk1.iso
+```
 
 against the following:
 
 cc4eac50e97dc0169751a2267409b00e  stacki-docker-1.13.0-7.x.x86_64.disk1.iso
 eaee67dc91ad35ebf6a5525e84747661  stacki-kubernetes-1.5.2-7.x_p1.x86_64.disk1.iso
 
-
+Add and enable the pallets:
 ```
+Add the pallets:
 
-If we have actually put this into S3 somewhere:
-```
-# wget * the iso
-
-Add and then add and enable the pallet:
-
-# stack add pallet stacki-hdp-pallet*.iso
+# stack add pallet stacki-*iso CentOS*.iso
 # stack list pallet 
 
-to make sure it's present
+to make sure everything is present.
 
-Then enable it:
+Then enable the pallets
+# stack enable pallet CentOS CentOS-Updates stacki-docker stacki-kubernetes
 
-# stack enable pallet stacki-hdp-pallet
 ```
 
-or clone,build, add, and enable
+A pallet generally has both frontend and backend configuration. To get the frontend configuration to happen for a pallet that contains it, run the pallet:
 ```
-# git clone this https://github.com/StackIQ/stacki-hdp-bridge.git
-# cd stacki-hdp-bridge
-# make
-
-Add and enable:
-# stack add pallet build-stacki-hdp-bridge-master/stacki-hdp-pallet*.iso
-# stack enable pallet stacki-hdp-pallet
-```
-
-Now run it. A pallet generally has both frontend and backend configuration. To get the frontend configuration to happen for a pallet that contains it, run the pallet
-```
-# stack run pallet stacki-hdp-bridge
+# stack run pallet stacki-kubernetes
 ```
 To see what scripts are going to run. 
 
 Then run it for real:
 ```
-# stack run pallet stacki-hdp-bridge | bash
+# stack run pallet stacki-kubernetes | bash
 ```
-The hdp-bridge pallet creates an ambari appliance, some key/value pairs (attributes), and sets-up a directory for getting the HDP repository you want. 
 
-First install a frontend. If you haven't, go to this documentation, which is still mostly accurate for 
-% Download all of these:
 
-### What you get
-### tl;dr
 
 <h6>Footnotes:</h6>
 
