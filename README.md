@@ -236,10 +236,130 @@ At this point we'll go through the keys we are using and I'll tell you what they
 
 The format I'll discuss them in is:
 ```
-Target:default global value 
+Target = key name
+Global Value = default global value 
 Used for:
 Hosts changed:
 ```
+
+You'll notice that some values have booleans: True/false, and some have actual values. Generally, if an attribute is a boolean, it's used to fire some piece of code or not. If it's an actual value, it's likely going in a config file for some service on a backend node.
+Booleans are cool because true/false/yes/no/y/n/1/0 all work and they can be capped, all-capped or not. 
+
+So let's explicate:
+
+```
+Target = kube.master
+Global Value = False
+Used for: setting which node is the Kubernetes master. You need one.
+Host change: backend-0-0 is the host master in this example, so the value for this is "True".
+```
+You must designate one host as the Kubernetes Master. The Kubernetes master runs more services than the other hosts. In this case, backend-0-0 is the master and so it will run all the kube master daemons: kube-apiserver, kube-controller-manager, kubelet, kube-dns, kube-proxy. 
+
+You can actually designate any node in your cluster as the master. All machines get the same software, they just don't run all the same services.
+
+```
+Target = kube.master_ip
+Global Value = 10.1.255.254
+Used for: Telling all the other services where their master host is.
+Host change: It's global, no need to change.
+```
+Yeah, no need to change. In the future I may calculate this for you, but maybe not. 
+
+```
+Target = kube.minion
+Global Value = True
+Used for: Not used, but I reserve the right too when we start splitting services.
+Host change: None - leave as a global and True
+```
+
+```
+Target = etcd.prefix
+Global Value = /stacki/network
+Used for: etcd key for network pairing
+Host change: None - leave as a global
+```
+
+Etcd is a cluster-wide key/value pair shared among the nodes. The only value we set is the network and it's stored as "/stacki/network." You can change that if you wish and you know what you're doing.
+
+```
+Target = etcd.cluster_member
+Global Value = False
+Used for: Setting up etcd service
+Host change: backend-0-0, 0-1, and 0-2. Set to True for these three nodes.
+```
+Etcd requires either that you have one etcd master with a storage backing store or 3, 5, or 7 etcd nodes in cluster. In this case, three nodes are designated to provide etcd redundancy. You can get away with one but we don't have a backing store in Phase 1. Phase 2 probably.
+
+```
+Target = kube.enable_dashboard
+Global Value = False
+Used for: Setting up the kubernetes-dashboard automatically
+Host change: backend-0-0 is set to True.
+```
+
+The kubernetes-dashboard is a UI for deployment of containers, services, pods etc. It's pretty. It's helpful especially if you're new to this. But I think it's beta? Setting a node to True will put the kubernetes-dashboard automatically. You'll have to start it up. (See below.) I've put it on the master. Technically you can put it on any node, but I haven't tested that yet - Phase 2 is around the corner.
+
+```
+Target = kube.pull_pods
+Global Value = True
+Used for: pulling yaml files from the frontend for stuff you already have.
+Host change: None - is a global set to "False" if you have no pods and aren't using the kubernetes-dashboard.
+```
+
+This is a pallet thing, not Kubernetes. I wanted to test both the dashboard and other pods and services I have without having to copy them to the node after every install. Since a Stacki frontend has a web server running for the backend node installation that's available at /var/www/html/install/ I put yaml in a directory and pull it during install.
+
+```
+Target = kube.pod_dir
+Global Value = install/kubernetes/pods
+Used for: 
+Host change: 
+```
+
+This is default. It's created during a "stack run pallet stacki-kubernetes." If you want it elsewhere under /var/www/html/ then create the directory and change this attribute.
+
+```
+Target = docker.registry.local
+Global Value = False
+Used for: Setting up a docker registry on a closed cluster.
+Host change: Global, either true or false
+```
+
+Oh this is a can of worms, and I don't like how I did it so it will be changing in Phase 2. If you have a completely closed cluster, meaning, backend nodes don't have an internet connection, then set this to True. We'll discuss the issues further below in the Docker section below.
+
+```
+Target = docker.registry.external
+Global Value = True
+Used for: everything that needs web connectivity
+Host change: Global - change only if you have an off-line cluster.
+```
+If the frontend or all the backend nodes do have connectivty to the internet, then set this to True.
+
+```
+Target = docker.overlay_disk
+Global Value = sdb
+Used for:
+Host change:
+```
+Worms, lots more worms. The overlayfs recommended by Docker is only in preview for CentOS 7.2 and 7.3, which is their way of saying: "It could work," and shrugging their shoulders. To work on XFS (our default), the filesystem needs to be created with "ftype=1" There are a couple of reasons this is problematic in Stacki 3.2 and CentOS 7.x using parted. Some of it is our fault, part of it not. There is a workaround, however. Define a disk by itself that will get the proper xfs ftype=1. Just name the disk, we do the rest. It defaults to sdb. If you have an SSD, use that because that's what's recommended.
+
+I plan on fixing this soon, but it may require a point release to get that done. 
+
+```
+Target = sync.hosts
+Global Value = True
+Used for: syncing /etc/hosts to all backend nodes
+Host change:
+```
+I do this because things just work better. 
+
+##### Docker - we have to talk
+
+Okay, with Docker there are two options: if no nodes don't have internet access, or if at least the frontend has internet access.
+
+######### Cluster is private
+
+If there are no nodes with internet access, set the docker.registry.local to True. This will create a registry on the master node. You can push docker images to this directory with "docker push master_ip:5000/imagename" and it will work.
+
+To get the kubernetes-dashboard up on a closed network, several docker images have been pre-created and installed on the master node.
 
 
 <h6>Footnotes:</h6>
