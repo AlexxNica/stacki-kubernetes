@@ -152,10 +152,11 @@ So in any event, we assume you have backend nodes. They don't have kubernetes on
 Do the following:
 
 Get the example spreadsheet file from the repository:
+
 ```
 wget stacki-kubernetes/spreadsheets/kubernetes-attrs.csv
 ```
-Open it with your favorite editor or Excel/Libre Office/etc.
+Open it with your favorite editor<sup name="a6">[6](#f6)</sup>, Excel/Libre Office/etc.
 
 It looks like [this](./stacki-kubernetes/spreadsheets/kubernetes-attrs.csv)
 
@@ -171,3 +172,5 @@ It looks like [this](./stacki-kubernetes/spreadsheets/kubernetes-attrs.csv)
 <sup name="f4">[4](#a4)</sup> If you currently have nothing, this will definitely work better than what you have. 
 
 <sup name="f5">[5](#a5)</sup> If you've seen any of the Kubernetes documentation, there are multiple ways to skin this particular software cat. We aren't doing those. If you want, you can just use Stacki to get the machines to a ping and a prompt and then use another/other tools for deploying Kubernetes. But then, you're not running it on bare metal anymore if that's a priority for you.
+
+<sup name="f6">[6](#a6)</sup> vi or die! I guess you could use emacs, but you're probably a developer and why are you reading this? 
