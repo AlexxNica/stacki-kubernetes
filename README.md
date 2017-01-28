@@ -160,6 +160,15 @@ Open it with your favorite editor<sup name="a6">[6](#f6)</sup>, Excel/Libre Offi
 
 It looks like [this](./stacki-kubernetes/spreadsheets/kubernetes-attrs.csv)
 
+| target      | kube.master | kube.master_ip | kube.minion | etcd.prefix     | etcd.cluster_member | kube.enable_dashboard | kube.pull_pods | kube.pod_dir            | docker.registry.local | docker.registry.external | docker.overlay_disk | sync.hosts | 
+|------------------|-------------|----------------|-------------|-----------------|---------------------|-----------------------|----------------|-------------------------|-----------------------|--------------------------|---------------------|------------| 
+| global      | False       | 10.1.255.254   | True        | /stacki/network | False               | False                 | True           | install/kubernetes/pods | False                 | True                     | sdb                 | True       | 
+| backend-0-0 | True        |                |             |                 | True                | True                  |                |                         |                       |                          |                     |            | 
+| backend-0-1 |             |                |             |                 | True                |                       |                |                         |                       |                          |                     |            | 
+| backend-0-2 |             |                |             |                 | True                |                       |                |                         |                       |                          |                     |            | 
+| backend-0-3 |             |                |             |                 |                     |                       |                |                         |                       |                          |                     |            | 
+| backend-0-4 |             |                |             |                 |                     |                       |                |                         |                       |                          |                     |            | 
+
 
 <h6>Footnotes:</h6>
 
@@ -173,4 +182,4 @@ It looks like [this](./stacki-kubernetes/spreadsheets/kubernetes-attrs.csv)
 
 <sup name="f5">[5](#a5)</sup> If you've seen any of the Kubernetes documentation, there are multiple ways to skin this particular software cat. We aren't doing those. If you want, you can just use Stacki to get the machines to a ping and a prompt and then use another/other tools for deploying Kubernetes. But then, you're not running it on bare metal anymore if that's a priority for you.
 
-<sup name="f6">[6](#a6)</sup> vi or die! I guess you could use emacs, but you're probably a developer and why are you reading this? 
+<sup name="f6">[6](#a6)</sup> vim or swim! I guess you could use emacs, but that means you're probably a developer and why are you reading this? 
