@@ -158,16 +158,17 @@ wget stacki-kubernetes/spreadsheets/kubernetes-attrs.csv
 ```
 Open it with your favorite editor<sup name="a6">[6](#f6)</sup>, Excel/Libre Office/etc.
 
-It looks like [this](./stacki-kubernetes/spreadsheets/kubernetes-attrs.csv)
+It looks like [this](../stacki-kubernetes/spreadsheets/kubernetes-attrs.csv)
 
-| target      | kube.master | kube.master_ip | kube.minion | etcd.prefix     | etcd.cluster_member | kube.enable_dashboard | kube.pull_pods | kube.pod_dir            | docker.registry.local | docker.registry.external | docker.overlay_disk | sync.hosts | 
-|------------------|-------------|----------------|-------------|-----------------|---------------------|-----------------------|----------------|-------------------------|-----------------------|--------------------------|---------------------|------------| 
-| global      | False       | 10.1.255.254   | True        | /stacki/network | False               | False                 | True           | install/kubernetes/pods | False                 | True                     | sdb                 | True       | 
-| backend-0-0 | True        |                |             |                 | True                | True                  |                |                         |                       |                          |                     |            | 
-| backend-0-1 |             |                |             |                 | True                |                       |                |                         |                       |                          |                     |            | 
-| backend-0-2 |             |                |             |                 | True                |                       |                |                         |                       |                          |                     |            | 
-| backend-0-3 |             |                |             |                 |                     |                       |                |                         |                       |                          |                     |            | 
-| backend-0-4 |             |                |             |                 |                     |                       |                |                         |                       |                          |                     |            | 
+| target             	| kube.master 	| kube.master_ip 	| kube.minion 	| etcd.prefix     	| etcd.cluster_member 	| kube.enable_dashboard 	| kube.pull_pods 	| kube.pod_dir            	| docker.registry.local 	| docker.registry.external 	| docker.overlay_disk 	| sync.hosts 	|
+|:----------------------	|-------------	|----------------	|-------------	|-----------------	|---------------------	|-----------------------	|----------------	|-------------------------	|-----------------------	|--------------------------	|---------------------	|------------	|
+| global      	| False       	| 10.1.255.254   	| True        	| /stacki/network 	| False               	| False                 	| True           	| install/kubernetes/pods 	| False                 	| True                     	| sdb                 	| True       	|
+| backend-0-0 	| True        	|                	|             	|                 	| True                	| True                  	|                	|                         	|                       	|                          	|                     	|            	|
+| backend-0-1 	|             	|                	|             	|                 	| True                	|                       	|                	|                         	|                       	|                          	|                     	|            	|
+| backend-0-2 	|             	|                	|             	|                 	| True                	|                       	|                	|                         	|                       	|                          	|                     	|            	|
+| backend-0-3 	|             	|                	|             	|                 	|                     	|                       	|                	|                         	|                       	|                          	|                     	|            	|
+| backend-0-4 	|             	|                	|             	|                 	|                     	|                       	|                	|                         	|                       	|                          	|                     	|            	|
+
 
 
 <h6>Footnotes:</h6>
