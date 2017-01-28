@@ -4,19 +4,68 @@ Hey, if you just showed up here this weekend. The docs are still being written, 
 ### tl;dr
 Really? You don't want to read this? It's the best README you'll ever encounter. 
 
-Ok, fine.
+Alright. Fine.
 
-Download these;
+We assume you have:
+1. A Stacki frontend/management node installed.
+2. Either backend nodes already installed or a hostfile you're going to load.
+3. Time, patience, no need to answer the question "Why?"
 
-Install them
+* Download these to your frontend
+- [CentOS-7.2](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-7-x86_64-Everything-1511.iso)
+- [CentOS-7.2 Updates](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-Updates-7.2-0.x86_64.disk1.iso)
+- [stacki-docker](https://s3.amazonaws.com/stacki/public/pallets/3.2/open-source/stacki-docker-1.13.0-7.x.x86_64.disk1.iso)
+- [stacki-kubernetes](http://stacki.s3.amazonaws.com/public/pallets/3.2/open-source/stacki-kubernetes-1.5.2-7.x_p1.x86_64.disk1.iso)
 
-Enable them
+* Install, enable, and then run stacki-kubernetes:
+```
+# stack add pallet stacki-*iso CentOS*.iso
+# stack enable pallet CentOS CentOS-Updates stacki-docker stacki-kubernetes
+# stack disable pallet os
 
-Add spreadsheet.
+# stack run pallet stacki-kubernetes | bash
+```
 
-Install backend nodes.
+* Prepare spreadsheet.
+```
+wget --no-check-certificate https://github.com/StackIQ/stacki-kubernetes/blob/master/spreadsheets/kubernetes-attrs.csv
 
+Edit it and change the "backend-0-?" hostnames to your hostnames"
 
+Add it:
+
+# stack load attrfile file=kubernetes-attrs.csv
+
+```
+
+* Install backend nodes.
+```
+# stack set host boot backend action=install
+# stack set host attr backend attr=nukedisks value=True
+
+Reboot your nodes. Wait. 
+```
+
+* Access
+
+```
+# ssh <master node>
+
+List pods:
+
+# kubectl -n kube-system get pods
+
+Port forward the name of the pod to access the Kubernetes Dashboard.
+
+# kubectl -n kube-system port-forward <pod name> 9090
+
+From your laptop ssh port forward:
+
+# ssh -L 9090:127.0.0.1:9090 root@10.1.255.254
+
+Go to http://127.0.0.1:9090 in a browser.
+
+```
 
 ### Prologue
 ============
