@@ -353,14 +353,57 @@ I do this because things just work better.
 
 ##### Docker - we have to talk
 
+The Docker registry (yeah, and Kubernetes) run insecurely in Phase 1. It won't in Phase 2.
+
 Okay, with Docker there are two options: if no nodes don't have internet access, or if at least the frontend has internet access.
 
 ######### Cluster is private
 
 If there are no nodes with internet access, set the docker.registry.local to True. This will create a registry on the master node. You can push docker images to this directory with "docker push master_ip:5000/imagename" and it will work.
 
-To get the kubernetes-dashboard up on a closed network, several docker images have been pre-created and installed on the master node.
+To get the kubernetes-dashboard up on a closed network, several docker images have been pre-created and installed on the master node, so that will at least work. But any other images that need to be pulled for your pods, also need to be pushed to the private registry. Including ones you may have in a site registry. This will change in Phase 2.
 
+######### Cluster has one public interface.
+
+I'm assuming if you have a public interface it's on the frontend. If all the backends are public facing, just set the docker.registry.external to "True" and be on your way.
+
+If your frontend has a public interface, then do the following:
+
+```
+# stack list network
+NETWORK  ADDRESS     MASK        GATEWAY      MTU   ZONE       DNS   PXE
+private: 10.1.0.0    255.255.0.0 10.1.1.1     1500  local      True  True
+public:  192.168.0.0 255.255.0.0 192.168.10.1 1500  jkloud.com False False
+```
+I have a public and a private. Backends are on the private. So I want to masquerade requests through my public interface, so I'll add three firewall rules for the frontend. (We are using iptables not firewalld.)
+
+```
+# stack add host firewall frontend action=MASQUERADE chain=POSTROUTING output-network=public protocol=all rulename=MASQUERADE service=all table=nat
+# stack add host firewall kaiza chain=FORWARD  output-network=private network=public protocol=all rulename=FORWARD_PUB service=all table=filter action=ACCEPT
+# stack add host firewall kaiza chain=FORWARD  output-network=public network=private protocol=all rulename=FORWARD_PRIV service=all table=filter action=ACCEPT
+```
+With rules set, I'll sync my firewall and restart it:
+
+```
+stack sync host firewall &hostname; restart=true
+```
+
+You should be able to ping google.com from any backend node. If not, get on the list and we'll help you work through the problem. 
+
+##### Proposed changes in no particular order
+* You oughta be able to install with CoreOS too.
+* Docker fully separated from Kubernetes pallet. They can depend on each other, but stacki-docker right now only carries RPMs and no configuration.
+* Use TLS in Docker and Kubernetes
+* Rkt
+* Fix stacki to use quoted options for partitioning - fixes overlayfs problems.
+* Docker to support site registry.
+* Run just an etcd cluster?
+* Storage backed etcd. 
+* System Kubernetes daemons to use kubecfg versus /etc/sysconfig files. 
+
+##### Fixing stuff that's done broke
+
+Get on googlegroups or the Stacki Slack channel and tell us what you need. You have a chance to influence the direction of this pallet in positive ways.
 
 <h6>Footnotes:</h6>
 
