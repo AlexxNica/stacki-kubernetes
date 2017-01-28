@@ -157,7 +157,7 @@ wget stacki-kubernetes/spreadsheets/kubernetes-attrs.csv
 ```
 Open it with your favorite editor or Excel/Libre Office/etc.
 
-It looks like [this](stacki-kubernetes/spreadsheets/kubernetes-attrs.csv)
+It looks like [this](./stacki-kubernetes/spreadsheets/kubernetes-attrs.csv)
 
 
 <h6>Footnotes:</h6>
