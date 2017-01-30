@@ -466,16 +466,26 @@ List pods:
 
 # kubectl -n kube-system get pods
 
-Port forward the name of the pod to access the Kubernetes Dashboard.
+NAME                                    READY     STATUS    RESTARTS   AGE
+kubernetes-dashboard-1728291479-vh085   1/1       Running   0          45m
+```
 
+Port forward the name of the pod to access the Kubernetes Dashboard.
+```
 # kubectl -n kube-system port-forward <pod name> 9090
 
-From your laptop ssh port forward:
+e.g.
+# kubectl -n kube-system port-forward kubernetes-dashboard-1728291479-vh085 9090
+Forwarding from 127.0.0.1:9090 -> 9090
+Forwarding from [::1]:9090 -> 9090
+```
 
+From your control machine ssh port forward to the dasboard node.
+```
 # ssh -L 9090:127.0.0.1:9090 root@10.1.255.254
+```
 
 Go to http://127.0.0.1:9090 in a browser.
-```
 
 
 ##### Proposed changes in no particular order
