@@ -13,8 +13,8 @@
 	All rights reserved. stacki(r) v3.3 stacki.com
 	</si_copyright>
 
-	<order head="base" tail="stacki-kubernetes-base"/>
-	<edge from="base" to="stacki-kubernetes-base" />
+	<order head="backend" tail="stacki-kubernetes-base"/>
+	<edge from="backend" to="stacki-kubernetes-base" />
 
 	<order head="server" tail="stacki-kubernetes-server"/>
 	<edge from="server" to="stacki-kubernetes-server" />
