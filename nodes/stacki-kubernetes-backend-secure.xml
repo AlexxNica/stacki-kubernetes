@@ -1,0 +1,396 @@
+<?xml version="1.0" standalone="no"?>
+<kickstart>
+
+<description>
+Kubernetes client 
+</description>
+
+<!-- shell code for post RPM installation -->
+<package>kubernetes-server</package>
+<package>kubernetes-extras</package>
+<package>kubernetes-client</package>
+<package>socat</package>
+<package cond="&kube.master;">kubernetes-images</package>
+<package cond="&kube.master;">firefox</package>
+
+<post>
+useradd kubeadmin
+echo "kubeadmin" | passwd --stdin kubeadmin
+
+<file name="/opt/kubernetes/etc/passwords">
+kubeadmin,kubeadmin,1000
+</file>
+
+<file name="/etc/sysconfig/network-scripts/ifcfg-em2" mode="append">
+GATEWAY=&Kickstart_PublicGateway;
+</file>
+
+<file name="/usr/lib/systemd/system/kube-proxy.service">
+[Unit]
+Description=Kubernetes Kube-Proxy Server
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+After=network.target
+
+[Service]
+EnvironmentFile=-/opt/kubernetes/etc/config
+EnvironmentFile=-/opt/kubernetes/etc/proxy
+ExecStart=/opt/kubernetes/bin/kube-proxy --masquerade-all \
+	    ${KUBE_LOGTOSTDERR} \
+	    ${KUBE_LOG_LEVEL} \
+	    ${KUBE_MASTER} \
+	    ${KUBE_PROXY_ARGS}
+Restart=on-failure
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+</file>
+
+mkdir -p /var/lib/kubelet
+
+<file name="/usr/lib/systemd/system/kubelet.service">
+[Unit]
+Description=Kubernetes Kubelet Server
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+After=docker.service
+Requires=docker.service
+
+[Service]
+WorkingDirectory=/var/lib/kubelet
+EnvironmentFile=-/opt/kubernetes/etc/config
+EnvironmentFile=-/opt/kubernetes/etc/kubelet
+ExecStart=/opt/kubernetes/bin/kubelet \
+	    ${KUBE_LOGTOSTDERR} \
+	    ${KUBE_LOG_LEVEL} \
+	    ${KUBELET_API_SERVER} \
+	    ${KUBELET_ADDRESS} \
+	    ${KUBELET_PORT} \
+	    ${KUBELET_HOSTNAME} \
+	    ${KUBE_ALLOW_PRIV} \
+	    ${KUBELET_ARGS}
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+</file>
+
+<file name="/opt/kubernetes/etc/config">
+# Comma separated list of nodes in the etcd cluster
+KUBE_ETCD_SERVERS="--etcd-servers=http://&kube.master_ip;:2379"
+
+# logging to stderr means we get it in the systemd journal
+KUBE_LOGTOSTDERR="--logtostderr=true"
+
+# journal message level, 0 is debug
+KUBE_LOG_LEVEL="--v=0"
+
+# Should this cluster be allowed to run privileged docker containers
+KUBE_ALLOW_PRIV="--allow-privileged=false"
+
+KUBE_MASTER="--master=http://&kube.master_ip;:8080"
+</file>
+systemctl disable iptables firewalld
+systemctl enable kubelet kube-proxy
+</post>
+
+<post cond="&kube.master;">
+<file name="/usr/lib/systemd/system/kube-apiserver.service">
+[Unit]
+Description=Kubernetes API Server
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+After=network.target
+After=etcd.service
+
+[Service]
+EnvironmentFile=-/opt/kubernetes/etc/config
+EnvironmentFile=-/opt/kubernetes/etc/apiserver
+ExecStart=/opt/kubernetes/bin/kube-apiserver \
+	    ${KUBE_LOGTOSTDERR} \
+	    ${KUBE_LOG_LEVEL} \
+	    ${KUBE_ETCD_SERVERS} \
+	    ${KUBE_API_ADDRESS} \
+	    ${KUBE_API_PORT} \
+	    ${KUBELET_PORT} \
+	    ${KUBE_ALLOW_PRIV} \
+	    ${KUBE_SERVICE_ADDRESSES} \
+	    ${KUBE_ADMISSION_CONTROL} \
+	    ${KUBE_PASS_AUTH} \
+	    ${KUBE_API_ARGS} \
+            --client-ca-file=/srv/kubernetes/ca.crt \
+            --tls-cert-file=/srv/kubernetes/server.crt \
+            --tls-private-key-file=/srv/kubernetes/server.key
+Restart=on-failure
+Type=notify
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+</file>
+
+<file name="/usr/lib/systemd/system/kube-controller-manager.service">
+[Unit]
+Description=Kubernetes Controller Manager
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+[Service]
+EnvironmentFile=-/opt/kubernetes/etc/config
+EnvironmentFile=-/opt/kubernetes/etc/controller-manager
+ExecStart=/opt/kubernetes/bin/kube-controller-manager \
+	    ${KUBE_LOGTOSTDERR} \
+	    ${KUBE_LOG_LEVEL} \
+	    ${KUBE_MASTER} \
+	    ${KUBE_CONTROLLER_MANAGER_ARGS}
+Restart=on-failure
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+</file>
+<file name="/usr/lib/systemd/system/kube-scheduler.service">
+[Unit]
+Description=Kubernetes Scheduler Plugin
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+[Service]
+EnvironmentFile=-/opt/kubernetes/etc/config
+EnvironmentFile=-/opt/kubernetes/etc/scheduler
+ExecStart=/opt/kubernetes/bin/kube-scheduler \
+	    ${KUBE_LOGTOSTDERR} \
+	    ${KUBE_LOG_LEVEL} \
+	    ${KUBE_MASTER} \
+	    ${KUBE_SCHEDULER_ARGS}
+Restart=on-failure
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+</file>
+<file name="/opt/kubernetes/etc/apiserver">
+# The address on the local server to listen to.
+KUBE_API_ADDRESS="--address=0.0.0.0"
+
+# The port on the local server to listen on.
+KUBE_API_PORT="--port=8080"
+
+# How the replication controller and scheduler find the kube-apiserver
+KUBE_MASTER="--master=http://&kube.master_ip;:8080"
+
+KUBE_ETCD_SERVERS="--etcd_servers=http://&kube.master_ip;:2379"
+
+# Port kubelets listen on
+KUBELET_PORT="--kubelet-port=10250"
+
+# Address range to use for services
+KUBE_SERVICE_ADDRESSES="--service-cluster-ip-range=10.254.0.0/16"
+
+KUBE_ADMISSION_CONTROL="--admission_control=NamespaceLifecycle,NamespaceExists,LimitRanger,SecurityContextDeny,ResourceQuota"
+# Add your own!
+
+KUBE_PASS_AUTH="--basic-auth-file=/opt/kubernetes/etc/passwords"
+KUBE_API_ARGS=""
+</file>
+<file name="/opt/kubernetes/etc/kubedns">
+KUBE_ALSO_LOG="--alsologtostderr"
+KUBE_DNS_BIND_ADDRESS="--dns-bind-address=0.0.0.0"
+KUBE_MASTER_URL="--kube-master-url=http://&kube.master_ip;:8080"
+KUBE_LOG_DIR="--log-dir=/var/log/kubernetes"
+</file>
+
+<file name="/usr/lib/systemd/system/kube-dns.service">
+[Unit]
+Description=Kubernetes DNS
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+After=network.target
+After=etcd.service
+
+[Service]
+EnvironmentFile=-/opt/kubernetes/etc/config
+EnvironmentFile=-/opt/kubernetes/etc/kubedns
+ExecStart=/opt/kubernetes/bin/kube-dns \
+        ${KUBE_LOG_LEVEL} \
+        ${KUBE_ALSO_LOG} \
+        ${KUBE_DNS_BIND_ADDRESS} \
+        ${KUBE_MASTER_URL} \
+        ${KUBE_LOG_DIR}
+Restart=on-failure
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+</file>
+
+systemctl enable kube-apiserver kube-controller-manager kube-scheduler kube-dns
+</post>
+<post cond="&docker.registry.local;">
+<file name="/opt/kubernetes/pods/kubernetes-dashboard.yaml">
+# Copyright 2015 Google Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Configuration to deploy release version of the Dashboard UI.
+#
+# Example usage: kubectl create -f this_file
+
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  labels:
+    app: kubernetes-dashboard
+  name: kubernetes-dashboard
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubernetes-dashboard
+  template:
+    metadata:
+      labels:
+        app: kubernetes-dashboard
+      # Comment the following annotation if Dashboard must not be deployed on master
+      annotations:
+        scheduler.alpha.kubernetes.io/tolerations: |
+          [
+            {
+              "key": "dedicated",
+              "operator": "Equal",
+              "value": "master",
+              "effect": "NoSchedule"
+            }
+          ]
+    spec:
+      containers:
+      - name: kubernetes-dashboard
+        image: &kube.master_ip;:5000/kubernetes-dashboard
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 9090
+          protocol: TCP
+        args:
+          # Uncomment the following line to manually specify Kubernetes API server Host
+          # If not specified, Dashboard will attempt to auto discover the API server and connect
+          # to it. Uncomment only if the default does not work.
+          - --apiserver-host=http://&kube.master_ip;:8080
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 9090
+          initialDelaySeconds: 30
+          timeoutSeconds: 30
+---
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    app: kubernetes-dashboard
+  name: kubernetes-dashboard
+  namespace: kube-system
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    targetPort: 9090
+  selector:
+    app: kubernetes-dashboard
+
+</file>
+</post>
+
+<post>
+<file name="/opt/kubernetes/etc/kubelet">
+# The address for the info server to serve on
+KUBELET_ADDRESS="--address=0.0.0.0"
+
+# The port for the info server to serve on
+KUBELET_PORT="--port=10250"
+
+# You may leave this blank to use the actual hostname
+KUBELET_HOSTNAME="--hostname-override=&hostaddr;"
+
+# Location of the api-server
+KUBELET_API_SERVER="--api_servers=http://&kube.master_ip;:8080"
+KUBE_CLUSTER_DNS="--cluster-dns=&kube.master_ip;"
+KUBE_CLUSTER_DOMAIN="--cluster-domain=kube.local"
+</file>
+
+<file name="/usr/lib/systemd/system/kubelet.service">
+[Unit]
+Description=Kubernetes Kubelet Server
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+After=docker.service
+Requires=docker.service
+
+[Service]
+WorkingDirectory=/var/lib/kubelet
+EnvironmentFile=-/opt/kubernetes/etc/config
+EnvironmentFile=-/opt/kubernetes/etc/kubelet
+ExecStart=/opt/kubernetes/bin/kubelet \
+        ${KUBE_LOGTOSTDERR} \
+        ${KUBE_LOG_LEVEL} \
+        ${KUBELET_API_SERVER} \
+        ${KUBELET_ADDRESS} \
+        ${KUBELET_PORT} \
+        ${KUBELET_HOSTNAME} \
+        ${KUBE_ALLOW_PRIV} \
+        ${KUBE_CLUSTER_DNS} \
+        ${KUBE_CLUSTER_DOMAIN} \
+        ${KUBELET_ARGS} \
+	--client-ca-file=/srv/kubernetes/ca.crt \
+	--tls-cert-file=/srv/kubernetes/server.crt \
+	--tls-private-key-file=/srv/kubernetes/server.key
+
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+</file>
+</post>
+
+<post cond="&docker.registry.local;">
+<file name="/opt/kubernetes/etc/kubelet" mode="append">
+# Add your own!
+KUBELET_ARGS="--pod-infra-container-image=&kube.master_ip;:5000/pause-amd64:3.0"
+</file>
+</post>
+
+<post cond="&docker.registry.external;">
+<file name="/opt/kubernetes/etc/kubelet" mode="append">
+# Add your own!
+KUBELET_ARGS=""
+</file>
+</post>
+
+<post cond="&kube.pull_pods;">
+wget -q -nc -r --no-parent -nd -P /opt/kubernetes/pods --reject='index.html*' http://&Kickstart_PrivateAddress;/&kube.pod_dir;
+</post>
+
+<boot order="post" cond="&kube.master; and &docker.registry.local;">
+/usr/bin/docker load -i /opt/kubernetes/images/registry2.tar
+/usr/bin/docker load -i /opt/kubernetes/images/kubernetes-dashboard.tar
+/usr/bin/docker load -i /opt/kubernetes/images/pause-amd64.tar
+/usr/bin/docker run -d -p 5000:5000 --restart=always --name registry registry:2
+/usr/bin/docker tag gcr.io/google_containers/kubernetes-dashboard-amd64:v1.5.1 &kube.master_ip;:5000/kubernetes-dashboard:v1.5.1
+/usr/bin/docker push &kube.master_ip;:5000/kubernetes-dashboard:v1.5.1
+/usr/bin/docker tag gcr.io/google_containers/pause-amd64:3.0 &kube.master_ip;:5000/pause-amd64:3.0
+/usr/bin/docker push &kube.master_ip;:5000/pause-amd64:3.0
+</boot>
+
+<boot order="post" cond="&docker.registry.local;">
+/usr/bin/docker pull &kube.master_ip;:5000/kubernetes-dashboard:v1.5.1
+</boot>
+
+<boot order="post" cond="&kube.enable_dashboard;">
+/opt/kubernetes/bin/kubectl create -f /opt/kubernetes/pods/kubernetes-dashboard.yaml
+</boot>
+
+</kickstart>

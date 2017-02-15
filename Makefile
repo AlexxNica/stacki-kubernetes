@@ -41,7 +41,7 @@
 
 ROLLROOT = .
 include $(PALLETBUILD)/etc/CCRolls.mk
-PHASE=1
+PHASE=2
 VERS=$(shell curl -s -k https://storage.googleapis.com/kubernetes-release/release/stable.txt | cut -c 2-)
 
 refresh::

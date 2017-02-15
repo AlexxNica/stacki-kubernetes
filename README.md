@@ -480,9 +480,23 @@ Forwarding from 127.0.0.1:9090 -> 9090
 Forwarding from [::1]:9090 -> 9090
 ```
 
-From your control machine ssh port forward to the dasboard node.
+From your control machine ssh port forward to the dashboard node.
 ```
 # ssh -L 9090:127.0.0.1:9090 root@10.1.255.254
+```
+
+If you have access from a desktop or laptop to the Manager node, you could also do this:
+
+Install kubectl on your laptop/desktop:
+
+```
+# kubectl -n kube-system get pods --server=http://10.1.255.254:8080
+```
+
+Then
+
+```
+kubectl -n kube-system port-forward kubernetes-dashboard-1728291479-q1sjp --server=http://10.1.255.254:8080 9090
 ```
 
 Go to http://127.0.0.1:9090 in a browser.

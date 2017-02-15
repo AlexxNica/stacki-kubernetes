@@ -5,3 +5,4 @@ kubernetes-extras
 kubernetes-server
 kubernetes-images
 roll-stacki-kubernetes-kickstart
+easyrsa

@@ -13,13 +13,16 @@
 	All rights reserved. stacki(r) v3.3 stacki.com
 	</si_copyright>
 
-	<order head="backend" tail="stacki-kubernetes-base"/>
-	<edge from="backend" to="stacki-kubernetes-base" />
+	<order head="stacki-docker-backend" tail="stacki-kubernetes-base"/>
+	<edge from="stacki-docker-backend" to="stacki-kubernetes-base" />
 
 	<order head="server" tail="stacki-kubernetes-server"/>
 	<edge from="server" to="stacki-kubernetes-server" />
 
-	<order head="stacki-kubernetes-base" tail="stacki-kubernetes-backend"/>
-	<edge from="stacki-kubernetes-base" to="stacki-kubernetes-backend" />
+	<order cond="kube.secure" head="stacki-kubernetes-base" tail="stacki-kubernetes-backend-secure"/>
+	<edge cond="kube.secure" from="stacki-kubernetes-base" to="stacki-kubernetes-backend-secure" />
+
+	<order cond="kube.insecure" head="stacki-kubernetes-base" tail="stacki-kubernetes-backend-insecure"/>
+	<edge cond="kube.insecure" from="stacki-kubernetes-base" to="stacki-kubernetes-backend-insecure" />
 
 </graph>

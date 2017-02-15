@@ -11,14 +11,7 @@ Kubernetes pallet backend base
 <package>chrony</package>
 <package>etcd</package>
 <package>flannel</package>
-<package>docker-engine</package>
-
-<!-- workaround for overlayfs xfs issues in RHEL -->
-<pre cond="&nukedisks;">
-parted -s /dev/&docker.overlay_disk; 'mklabel gpt' &gt; /root/parted.log 2&gt;&amp;1
-parted -s /dev/&docker.overlay_disk; 'mkpart primary xfs 1 -1' &gt; /root/parted.log 2&gt;&amp;1
-mkfs.xfs /dev/&docker.overlay_disk; 1 -L xfs -n ftype=1 -f &gt; /root/parted.log 2&gt;&amp;1
-</pre>
+<package>easyrsa</package>
 
 <!-- general -->
 <post>
@@ -31,12 +24,6 @@ net.ipv4.ip_forward = 1
 mkdir -p /var/lib/docker
 
 </post>
-
-<post cond="&nukedisks;">
-export BLKID=`blkid /dev/sdb1 | awk '{print $3}' | sed "s/\"//g"` 
-echo "${BLKID} /var/lib/docker    xfs     defaults        0 0" &gt;&gt; /etc/fstab
-</post>
-
 
 <post cond="sync.hosts">
 <file name="/tmp/hosts">
@@ -289,6 +276,7 @@ systemctl enable flanneld
 mkdir -p /etc/systemd/system/docker.service.d
 systemctl enable docker
 </post>
+
 <post cond="&docker.registry.local;"> 
 <file name="/etc/systemd/system/docker.service.d/override.conf">
 [Service]
@@ -299,59 +287,29 @@ Restart=always
 RestartSec=10
 </file>
 </post>
+
 <post cond="&docker.registry.external;"> 
 <file name="/etc/systemd/system/docker.service.d/override.conf">
 [Service]
+EnvironmentFile=-/etc/sysconfig/docker
 EnvironmentFile=-/etc/sysconfig/docker-network
 ExecStart=
-ExecStart=/usr/bin/dockerd --storage-driver=overlay $DOCKER_OPTS
+ExecStart=/usr/bin/dockerd --storage-driver=overlay $DOCKER_NETWORK_OPTS $DOCKER_OPTS
 Restart=always
 RestartSec=10
 </file>
 </post>
 
+<!-- tls -->
 <post>
-<file name="/usr/lib/systemd/system/stack-post.service">
-[Unit]
-Description=stack-post
-After=multi-user.target
-
-[Service]
-Type=oneshot
-ExecStart=-/usr/bin/mv /etc/sysconfig/stack-post /root/stack-post.sh
-ExecStart=-/usr/bin/chmod 755 /root/stack-post.sh
-ExecStart=-/bin/bash -c '/root/stack-post.sh &gt; /root/stack-post.log'
-ExecStartPost=-/usr/bin/chmod 644 /root/stack-post.sh
-RemainAfterExit=no
-
-[Install]
-WantedBy=multi-user.target
-</file>
-
-systemctl enable stack-post.service &gt;&gt; stack.log 2&gt;&amp;1
-
-<file name="/usr/lib/systemd/system/stack-pre.service">
-[Unit]
-Description=stack-pre
-Before=network.target
-After=local-fs.target
-
-[Service]
-Type=oneshot
-ExecStart=-/usr/bin/mv /etc/sysconfig/stack-pre /root/stack-pre.sh
-ExecStart=-/usr/bin/chmod 755 /root/stack-pre.sh
-ExecStart=-/bin/bash -c '/root/stack-pre.sh &gt; /root/stack-pre.log'
-ExecStartPost=-/usr/bin/chmod 644 /root/stack-pre.sh
-RemainAfterExit=no
-
-[Install]
-WantedBy=multi-user.target
-</file>
-
-rm -f /etc/init.d/stack-pre
-rm -f /etc/init.d/stack-post
-systemctl enable stack-post.service &gt;&gt; stack.log 2&gt;&amp;1
-systemctl enable stack-pre.service &gt;&gt; stack.log 2&gt;&amp;1
+mkdir -p /srv/kubernetes
+cd /opt/kubernetes/easyrsa3
+./easyrsa init-pki &gt; /root/keys.log 2&gt;&amp;1
+./easyrsa --batch "--req-cn=&kube.master_ip;@`date +%s`" build-ca nopass &gt;&gt; /root/keys.log 2&gt;&amp;1
+./easyrsa --subject-alt-name="IP:&kube.master_ip;" build-server-full kubernetes-master nopass &gt;&gt; /root/keys.log 2&gt;&amp;1
+cp ./pki/ca.crt /srv/kubernetes/ca.crt &gt;&gt; /root/keys.log 2&gt;&amp;1
+cp ./pki/issued/kubernetes-master.crt /srv/kubernetes/server.crt &gt;&gt; /root/keys.log 2&gt;&amp;1
+cp ./pki/private/kubernetes-master.key /srv/kubernetes/server.key &gt;&gt; /root/keys.log 2&gt;&amp;1
 </post>
 
 <boot order="post" cond="&kube.master;">
