@@ -21,9 +21,29 @@ echo "kubeadmin" | passwd --stdin kubeadmin
 kubeadmin,kubeadmin,1000
 </file>
 
-<file name="/etc/sysconfig/network-scripts/ifcfg-em2" mode="append">
-GATEWAY=&Kickstart_PublicGateway;
+mkdir -p /var/log/kubernetes
+<!-- common kubernetes config -->
+<file name="/opt/kubernetes/etc/config">
+KUBE_ALSOLOGTOSTDERR="--alsologtostderr=true"
+KUBE_LOG_LEVEL="--v=1"
+KUBE_MASTER="--master=https://&kube.master_ip;:6443"
+KUBE_LOG_DIR="--log-dir=/var/log/kubernetes"
+KUBE_HEALTHZ_ADDRESS="--healthz-bind-address=&hostaddr;"
+KUBE_ADDRESS="--address=&hostaddr;"
+KUBE_CONFIG=--kubeconfig=/opt/kubernetes/etc/kubeconfig
+KUBE_API_SERVER=--api-servers=https://&kube.master_ip;:6443
 </file>
+
+<!-- kube-proxy -->
+<file name="/etc/systemd/system/kube-proxy.service.d/kube-proxy.conf">
+[Service]
+Environment=KUBE_HOSTNAME_OVERRIDE=--hostname-override=&hostaddr;
+Environment=KUBE_MASQUERADE_ALL=--masquerade-all
+Environment=KUBE_BIND_ADDRESS=--bind-address=&hostaddr;
+Environment=KUBE_PROXY_MODE=--proxy-mode=iptables
+Environment=KUBE_CLUSTER_CIDR=--cluster-cidr=24
+</file>
+
 
 <file name="/usr/lib/systemd/system/kube-proxy.service">
 [Unit]
@@ -33,12 +53,14 @@ After=network.target
 
 [Service]
 EnvironmentFile=-/opt/kubernetes/etc/config
-EnvironmentFile=-/opt/kubernetes/etc/proxy
-ExecStart=/opt/kubernetes/bin/kube-proxy --masquerade-all \
-	    ${KUBE_LOGTOSTDERR} \
+ExecStart=/opt/kubernetes/bin/kube-proxy \
+	    ${KUBE_ALSLOGTOSTDERR} \
 	    ${KUBE_LOG_LEVEL} \
+            ${KUBE_CONFIG} \
+            ${KUBE_CLUSTER_CIDR} \
 	    ${KUBE_MASTER} \
-	    ${KUBE_PROXY_ARGS}
+	    ${KUBE_HOSTNAME_OVERRIDE} \
+            ${KUBE_MASQUERADE_ALL}
 Restart=on-failure
 LimitNOFILE=65536
 
@@ -46,7 +68,51 @@ LimitNOFILE=65536
 WantedBy=multi-user.target
 </file>
 
+<file name="/opt/kubernetes/etc/kubeconfig">
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority: /opt/kubernetes/etc/certs.d/ca.pem
+    server: https://&kube.master_ip;:6443
+  name: kubernetes
+- cluster:
+    certificate-authority: /opt/kubernetes/etc/certs.d/ca.pem
+    server: https://&kube.master_ip;:6443
+  name: local
+contexts:
+- context:
+    cluster: local
+    user: kubelet
+  name: kubelet-context
+- context:
+    cluster: local
+    user: kube-proxy
+  name: kubeproxy-context
+current-context: kubelet-context
+kind: Config
+preferences: {}
+users:
+- name: kube-proxy
+  user:
+    client-certificate: /opt/kubernetes/etc/certs.d/kube-proxy-client.pem
+    client-key: /opt/kubernetes/etc/certs.d/kube-proxy-client-key.pem
+- name: kubelet
+  user:
+    client-certificate: /opt/kubernetes/etc/certs.d/kubelet-client.pem
+    client-key: /opt/kubernetes/etc/certs.d/kubelet-client-key.pem
+</file>
+
 mkdir -p /var/lib/kubelet
+
+<file name="/etc/systemd/system/kubelet.service.d/kubelet.conf">
+[Service]
+Environment=KUBE_HOSTNAME_OVERRIDE=--hostname-override=&hostaddr;
+Environment=KUBE_CLUSTER_DNS=--cluster-dns=&kube.master_ip;
+Environment=KUBE_CLUSTER_DOMAIN=--cluster-domain=&kube.domain;
+Environment=KUBE_CA_CERT=--client-ca-file=/opt/kubernetes/etc/certs.d/ca.pem
+Environment=KUBE_TLS_CERT_FILE=--tls-cert-file=/opt/kubernetes/etc/certs.d/kubelet-client.pem
+Environment=KUBE_TLS_KEY_FILE=--tls-private-key-file=/opt/kubernetes/etc/certs.d/kubelet-client-key.pem
+</file>
 
 <file name="/usr/lib/systemd/system/kubelet.service">
 [Unit]
@@ -58,42 +124,58 @@ Requires=docker.service
 [Service]
 WorkingDirectory=/var/lib/kubelet
 EnvironmentFile=-/opt/kubernetes/etc/config
-EnvironmentFile=-/opt/kubernetes/etc/kubelet
 ExecStart=/opt/kubernetes/bin/kubelet \
-	    ${KUBE_LOGTOSTDERR} \
+	    ${KUBE_ALSOLOGTOSTDERR} \
 	    ${KUBE_LOG_LEVEL} \
-	    ${KUBELET_API_SERVER} \
-	    ${KUBELET_ADDRESS} \
-	    ${KUBELET_PORT} \
-	    ${KUBELET_HOSTNAME} \
-	    ${KUBE_ALLOW_PRIV} \
-	    ${KUBELET_ARGS}
+	    ${KUBE_API_SERVER} \
+	    ${KUBE_CLUSTER_DNS} \
+	    ${KUBE_CLUSTER_DOMAIN} \
+	    ${KUBE_HOSTNAME_OVERRIDE} \
+            ${KUBE_CONFIG}
 Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
 </file>
 
-<file name="/opt/kubernetes/etc/config">
-# Comma separated list of nodes in the etcd cluster
-KUBE_ETCD_SERVERS="--etcd-servers=http://&kube.master_ip;:2379"
-
-# logging to stderr means we get it in the systemd journal
-KUBE_LOGTOSTDERR="--logtostderr=true"
-
-# journal message level, 0 is debug
-KUBE_LOG_LEVEL="--v=0"
-
-# Should this cluster be allowed to run privileged docker containers
-KUBE_ALLOW_PRIV="--allow-privileged=false"
-
-KUBE_MASTER="--master=http://&kube.master_ip;:8080"
-</file>
 systemctl disable iptables firewalld
 systemctl enable kubelet kube-proxy
 </post>
 
 <post cond="&kube.master;">
+
+<file name="/etc/systemd/system/kube-apiserver.service.d/kube-apiserver.conf">
+[Service]
+# Client Env Vars
+Environment=KUBE_BIND_ADDRESS=--address=10.1.255.254
+Environment=KUBE_SERVICE_CLUSTER_IP_RANGE=--service-cluster-ip-range=10.254.0.0/16
+Environment=KUBE_ADMISSION_CONTROL=--admission_control=NamespaceLifecycle,NamespaceExists,LimitRanger,SecurityContextDeny,ResourceQuota
+Environment=KUBE_CLIENT_CAFILE=--client-ca-file=/opt/kubernetes/etc/certs.d/ca.pem
+Environment=KUBE_TLS_CERT_FILE=--tls-cert-file=/opt/kubernetes/etc/certs.d/kube-apiserver-server.pem
+Environment=KUBE_TLS_PRIVATE_KEY=--tls-private-key-file=/opt/kubernetes/etc/certs.d/kube-apiserver-server-key.pem
+Environment=KUBE_PASS_AUTH=--basic-auth-file=/opt/kubernetes/etc/passwords
+Environment=KUBE_ETCD_CAFILE=--etcd-cafile=/opt/kubernetes/etc/certs.d/ca.pem
+Environment=KUBE_ETCD_CERTFILE=--etcd-certfile=/opt/kubernetes/etc/certs.d/etcd-member.pem
+Environment=KUBE_ETCD_KEYFILE=--etcd-keyfile=/opt/kubernetes/etc/certs.d/etcd-member-key.pem
+<eval shell="/opt/stack/bin/python" mode="xml">
+import stack.api as api
+import stack.commands as cmd
+
+actions = api.Call('report.host.attr',
+		['attr=etcd.cluster_member', 'pydict=True'])
+
+urls = []
+for a in actions:
+	node = a.split(':')[-0].strip()
+	val = a.split(':')[-1].strip()
+	if cmd.str2bool(val) == True:
+		ip = api.Call('report.host.attr',[node,'attr=hostaddr'])
+		url = 'https://%s:2379' % (ip[0])
+		urls.append(url)
+
+print 'Environment=KUBE_ETCD_SERVERS=--etcd_servers=%s' % ','.join(urls[:])
+</eval></file>
+
 <file name="/usr/lib/systemd/system/kube-apiserver.service">
 [Unit]
 Description=Kubernetes API Server
@@ -103,28 +185,31 @@ After=etcd.service
 
 [Service]
 EnvironmentFile=-/opt/kubernetes/etc/config
-EnvironmentFile=-/opt/kubernetes/etc/apiserver
 ExecStart=/opt/kubernetes/bin/kube-apiserver \
-	    ${KUBE_LOGTOSTDERR} \
-	    ${KUBE_LOG_LEVEL} \
-	    ${KUBE_ETCD_SERVERS} \
-	    ${KUBE_API_ADDRESS} \
-	    ${KUBE_API_PORT} \
-	    ${KUBELET_PORT} \
-	    ${KUBE_ALLOW_PRIV} \
-	    ${KUBE_SERVICE_ADDRESSES} \
-	    ${KUBE_ADMISSION_CONTROL} \
-	    ${KUBE_PASS_AUTH} \
-	    ${KUBE_API_ARGS} \
-            --client-ca-file=/srv/kubernetes/ca.crt \
-            --tls-cert-file=/srv/kubernetes/server.crt \
-            --tls-private-key-file=/srv/kubernetes/server.key
+    ${KUBE_BIND_ADDRESS} \
+    ${KUBE_ETCD_SERVERS} \
+    ${KUBE_SERVICE_CLUSTER_IP_RANGE} \
+    ${KUBE_ADMISSION_CONTROL} \
+    ${KUBE_ALSOLOGTOSTDERR} \
+    ${KUBE_LOG_LEVEL} \
+    ${KUBE_CLIENT_CAFILE} \
+    ${KUBE_TLS_CERT_FILE} \
+    ${KUBE_TLS_PRIVATE_KEY} \
+    ${KUBE_LOG_DIR} \
+    ${KUBE_PASS_AUTH} \
+    ${KUBE_ALSOLOGTOSTDERR} \
+    ${KUBE_ETCD_CAFILE} \
+    ${KUBE_ETCD_CERTFILE} \
+    ${KUBE_ETCD_KEYFILE}
 Restart=on-failure
 Type=notify
 LimitNOFILE=65536
 
 [Install]
 WantedBy=multi-user.target
+</file>
+
+<file name="/etc/systemd/system/kube-controller-manager.service.d/kube-controller-manager.conf">
 </file>
 
 <file name="/usr/lib/systemd/system/kube-controller-manager.service">
@@ -134,18 +219,21 @@ Documentation=https://github.com/GoogleCloudPlatform/kubernetes
 
 [Service]
 EnvironmentFile=-/opt/kubernetes/etc/config
-EnvironmentFile=-/opt/kubernetes/etc/controller-manager
 ExecStart=/opt/kubernetes/bin/kube-controller-manager \
-	    ${KUBE_LOGTOSTDERR} \
+	    ${KUBE_ALSOLOGTOSTDERR} \
 	    ${KUBE_LOG_LEVEL} \
-	    ${KUBE_MASTER} \
-	    ${KUBE_CONTROLLER_MANAGER_ARGS}
+	    ${KUBE_LOG_DIR} \
+            ${KUBE_CONFIG}
 Restart=on-failure
 LimitNOFILE=65536
 
 [Install]
 WantedBy=multi-user.target
 </file>
+
+<file name="/etc/systemd/system/kube-scheduler.service.d/kube-scheduler.conf">
+</file>
+
 <file name="/usr/lib/systemd/system/kube-scheduler.service">
 [Unit]
 Description=Kubernetes Scheduler Plugin
@@ -153,47 +241,24 @@ Documentation=https://github.com/GoogleCloudPlatform/kubernetes
 
 [Service]
 EnvironmentFile=-/opt/kubernetes/etc/config
-EnvironmentFile=-/opt/kubernetes/etc/scheduler
 ExecStart=/opt/kubernetes/bin/kube-scheduler \
-	    ${KUBE_LOGTOSTDERR} \
+	    ${KUBE_ALSOLOGTOSTDERR} \
 	    ${KUBE_LOG_LEVEL} \
-	    ${KUBE_MASTER} \
-	    ${KUBE_SCHEDULER_ARGS}
+	    ${KUBE_LOG_DIR} \
+            ${KUBE_CONFIG}
 Restart=on-failure
 LimitNOFILE=65536
 
 [Install]
 WantedBy=multi-user.target
 </file>
-<file name="/opt/kubernetes/etc/apiserver">
-# The address on the local server to listen to.
-KUBE_API_ADDRESS="--address=0.0.0.0"
 
-# The port on the local server to listen on.
-KUBE_API_PORT="--port=8080"
-
-# How the replication controller and scheduler find the kube-apiserver
-KUBE_MASTER="--master=http://&kube.master_ip;:8080"
-
-KUBE_ETCD_SERVERS="--etcd_servers=http://&kube.master_ip;:2379"
-
-# Port kubelets listen on
-KUBELET_PORT="--kubelet-port=10250"
-
-# Address range to use for services
-KUBE_SERVICE_ADDRESSES="--service-cluster-ip-range=10.254.0.0/16"
-
-KUBE_ADMISSION_CONTROL="--admission_control=NamespaceLifecycle,NamespaceExists,LimitRanger,SecurityContextDeny,ResourceQuota"
-# Add your own!
-
-KUBE_PASS_AUTH="--basic-auth-file=/opt/kubernetes/etc/passwords"
-KUBE_API_ARGS=""
-</file>
-<file name="/opt/kubernetes/etc/kubedns">
-KUBE_ALSO_LOG="--alsologtostderr"
-KUBE_DNS_BIND_ADDRESS="--dns-bind-address=0.0.0.0"
-KUBE_MASTER_URL="--kube-master-url=http://&kube.master_ip;:8080"
-KUBE_LOG_DIR="--log-dir=/var/log/kubernetes"
+<file name="/etc/systemd/system/kube-dns.service.d/kube-dns.conf">
+[Service]
+Environment=KUBE_DNS_BIND_ADDRESS=--dns-bind-address=&kube.master_ip;
+Environment=KUBE_MASTER_URL=--kube-master-url=https://&kube.master_ip;:6443
+Environment=KUBE_DOMAIN=--domain=&kube.domain;
+Environment=KUBE_CFG=--kubecfg-file=/opt/kubernetes/etc/kubeconfig
 </file>
 
 <file name="/usr/lib/systemd/system/kube-dns.service">
@@ -205,12 +270,13 @@ After=etcd.service
 
 [Service]
 EnvironmentFile=-/opt/kubernetes/etc/config
-EnvironmentFile=-/opt/kubernetes/etc/kubedns
 ExecStart=/opt/kubernetes/bin/kube-dns \
         ${KUBE_LOG_LEVEL} \
-        ${KUBE_ALSO_LOG} \
+        ${KUBE_ALSOLOGTOSTDERR} \
         ${KUBE_DNS_BIND_ADDRESS} \
+        ${KUBE_DOMAIN} \
         ${KUBE_MASTER_URL} \
+        ${KUBE_CFG} \
         ${KUBE_LOG_DIR}
 Restart=on-failure
 LimitNOFILE=65536
@@ -220,177 +286,20 @@ WantedBy=multi-user.target
 </file>
 
 systemctl enable kube-apiserver kube-controller-manager kube-scheduler kube-dns
-</post>
-<post cond="&docker.registry.local;">
-<file name="/opt/kubernetes/pods/kubernetes-dashboard.yaml">
-# Copyright 2015 Google Inc. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
-# Configuration to deploy release version of the Dashboard UI.
-#
-# Example usage: kubectl create -f this_file
-
-kind: Deployment
-apiVersion: extensions/v1beta1
-metadata:
-  labels:
-    app: kubernetes-dashboard
-  name: kubernetes-dashboard
-  namespace: kube-system
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: kubernetes-dashboard
-  template:
-    metadata:
-      labels:
-        app: kubernetes-dashboard
-      # Comment the following annotation if Dashboard must not be deployed on master
-      annotations:
-        scheduler.alpha.kubernetes.io/tolerations: |
-          [
-            {
-              "key": "dedicated",
-              "operator": "Equal",
-              "value": "master",
-              "effect": "NoSchedule"
-            }
-          ]
-    spec:
-      containers:
-      - name: kubernetes-dashboard
-        image: &kube.master_ip;:5000/kubernetes-dashboard
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 9090
-          protocol: TCP
-        args:
-          # Uncomment the following line to manually specify Kubernetes API server Host
-          # If not specified, Dashboard will attempt to auto discover the API server and connect
-          # to it. Uncomment only if the default does not work.
-          - --apiserver-host=http://&kube.master_ip;:8080
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 9090
-          initialDelaySeconds: 30
-          timeoutSeconds: 30
----
-kind: Service
-apiVersion: v1
-metadata:
-  labels:
-    app: kubernetes-dashboard
-  name: kubernetes-dashboard
-  namespace: kube-system
-spec:
-  type: NodePort
-  ports:
-  - port: 80
-    targetPort: 9090
-  selector:
-    app: kubernetes-dashboard
-
-</file>
-</post>
-
-<post>
-<file name="/opt/kubernetes/etc/kubelet">
-# The address for the info server to serve on
-KUBELET_ADDRESS="--address=0.0.0.0"
-
-# The port for the info server to serve on
-KUBELET_PORT="--port=10250"
-
-# You may leave this blank to use the actual hostname
-KUBELET_HOSTNAME="--hostname-override=&hostaddr;"
-
-# Location of the api-server
-KUBELET_API_SERVER="--api_servers=http://&kube.master_ip;:8080"
-KUBE_CLUSTER_DNS="--cluster-dns=&kube.master_ip;"
-KUBE_CLUSTER_DOMAIN="--cluster-domain=kube.local"
-</file>
-
-<file name="/usr/lib/systemd/system/kubelet.service">
-[Unit]
-Description=Kubernetes Kubelet Server
-Documentation=https://github.com/GoogleCloudPlatform/kubernetes
-After=docker.service
-Requires=docker.service
-
-[Service]
-WorkingDirectory=/var/lib/kubelet
-EnvironmentFile=-/opt/kubernetes/etc/config
-EnvironmentFile=-/opt/kubernetes/etc/kubelet
-ExecStart=/opt/kubernetes/bin/kubelet \
-        ${KUBE_LOGTOSTDERR} \
-        ${KUBE_LOG_LEVEL} \
-        ${KUBELET_API_SERVER} \
-        ${KUBELET_ADDRESS} \
-        ${KUBELET_PORT} \
-        ${KUBELET_HOSTNAME} \
-        ${KUBE_ALLOW_PRIV} \
-        ${KUBE_CLUSTER_DNS} \
-        ${KUBE_CLUSTER_DOMAIN} \
-        ${KUBELET_ARGS} \
-	--client-ca-file=/srv/kubernetes/ca.crt \
-	--tls-cert-file=/srv/kubernetes/server.crt \
-	--tls-private-key-file=/srv/kubernetes/server.key
-
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
-</file>
-</post>
-
-<post cond="&docker.registry.local;">
-<file name="/opt/kubernetes/etc/kubelet" mode="append">
-# Add your own!
-KUBELET_ARGS="--pod-infra-container-image=&kube.master_ip;:5000/pause-amd64:3.0"
-</file>
-</post>
-
-<post cond="&docker.registry.external;">
-<file name="/opt/kubernetes/etc/kubelet" mode="append">
-# Add your own!
-KUBELET_ARGS=""
-</file>
+mkdir /root/.kube
+mkdir /home/kubeadmin/.kube
+cp /opt/kubernetes/etc/kubeconfig /root/.kube/config
+cp /opt/kubernetes/etc/kubeconfig /home/kubeadmin/.kube/config
 </post>
 
 <post cond="&kube.pull_pods;">
-wget -q -nc -r --no-parent -nd -P /opt/kubernetes/pods --reject='index.html*' http://&Kickstart_PrivateAddress;/&kube.pod_dir;
+wget -q -nd -nc -r --no-parent -nd -P /opt/kubernetes/pods --reject='index.html*' http://&Kickstart_PrivateAddress;/&kube.pod_dir;
 </post>
 
-<boot order="post" cond="&kube.master; and &docker.registry.local;">
-/usr/bin/docker load -i /opt/kubernetes/images/registry2.tar
-/usr/bin/docker load -i /opt/kubernetes/images/kubernetes-dashboard.tar
-/usr/bin/docker load -i /opt/kubernetes/images/pause-amd64.tar
-/usr/bin/docker run -d -p 5000:5000 --restart=always --name registry registry:2
-/usr/bin/docker tag gcr.io/google_containers/kubernetes-dashboard-amd64:v1.5.1 &kube.master_ip;:5000/kubernetes-dashboard:v1.5.1
-/usr/bin/docker push &kube.master_ip;:5000/kubernetes-dashboard:v1.5.1
-/usr/bin/docker tag gcr.io/google_containers/pause-amd64:3.0 &kube.master_ip;:5000/pause-amd64:3.0
-/usr/bin/docker push &kube.master_ip;:5000/pause-amd64:3.0
-</boot>
-
-<boot order="post" cond="&docker.registry.local;">
-/usr/bin/docker pull &kube.master_ip;:5000/kubernetes-dashboard:v1.5.1
-</boot>
-
 <boot order="post" cond="&kube.enable_dashboard;">
-/opt/kubernetes/bin/kubectl create -f /opt/kubernetes/pods/kubernetes-dashboard.yaml
+export KUBECONFIG=$KUBECONFIG:/root/.kube/config:/opt/kubernetes/etc/kubeconfig
+/opt/kubernetes/bin/kubectl create -f /opt/kubernetes/pods/kubernetes-dashboard-secure.yaml &gt; /root/dash.log 2&gt;&amp;1
 </boot>
 
 </kickstart>

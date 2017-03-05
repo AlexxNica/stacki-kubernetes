@@ -13,16 +13,26 @@
 	All rights reserved. stacki(r) v3.3 stacki.com
 	</si_copyright>
 
-	<order head="stacki-docker-backend" tail="stacki-kubernetes-base"/>
-	<edge from="stacki-docker-backend" to="stacki-kubernetes-base" />
 
 	<order head="server" tail="stacki-kubernetes-server"/>
 	<edge from="server" to="stacki-kubernetes-server" />
 
-	<order cond="kube.secure" head="stacki-kubernetes-base" tail="stacki-kubernetes-backend-secure"/>
-	<edge cond="kube.secure" from="stacki-kubernetes-base" to="stacki-kubernetes-backend-secure" />
+	<order cond="kube.secure" head="stacki-docker-backend" tail="stacki-kubernetes-base-secure"/>
+	<edge cond="kube.secure" from="stacki-docker-backend" to="stacki-kubernetes-base-secure" />
 
-	<order cond="kube.insecure" head="stacki-kubernetes-base" tail="stacki-kubernetes-backend-insecure"/>
-	<edge cond="kube.insecure" from="stacki-kubernetes-base" to="stacki-kubernetes-backend-insecure" />
+	<order cond="kube.secure" head="stacki-kubernetes-base-secure" tail="stacki-kubernetes-tls"/>
+	<edge cond="kube.secure" from="stacki-kubernetes-base-secure" to="stacki-kubernetes-tls" />
+
+	<order cond="kube.secure" head="stacki-kubernetes-tls" tail="stacki-kubernetes-backend-secure"/>
+	<edge cond="kube.secure" from="stacki-kubernetes-tls" to="stacki-kubernetes-backend-secure" />
+
+	<order cond="kube.insecure" head="stacki-docker-backend" tail="stacki-kubernetes-base"/>
+	<edge cond="kube.insecure" from="stacki-docker-backend" to="stacki-kubernetes-base" />
+
+	<order cond="kube.insecure" head="stacki-kubernetes-base" tail="stacki-kubernetes-tls"/>
+	<edge cond="kube.insecure" from="stacki-kubernetes-base" to="stacki-kubernetes-tls" />
+
+	<order cond="kube.insecure" head="stacki-kubernetes-tls" tail="stacki-kubernetes-backend-insecure"/>
+	<edge cond="kube.insecure" from="stacki-kubernetes-tls" to="stacki-kubernetes-backend-insecure" />
 
 </graph>

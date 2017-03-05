@@ -315,7 +315,7 @@ KUBELET_PORT="--port=10250"
 KUBELET_HOSTNAME="--hostname-override=&hostaddr;"
 
 # Location of the api-server
-KUBELET_API_SERVER="--api_servers=http://&kube.master_ip;:8080"
+KUBELET_API_SERVER="--api-servers=http://&kube.master_ip;:8080"
 KUBE_CLUSTER_DNS="--cluster-dns=&kube.master_ip;"
 KUBE_CLUSTER_DOMAIN="--cluster-domain=kube.local"
 </file>

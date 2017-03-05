@@ -55,7 +55,7 @@ Wants=network-online.target
 [Service]
 Type=notify
 WorkingDirectory=/var/lib/etcd/
-EnvironmentFile=-/opt/kubernetes/etc/etcd.conf
+#EnvironmentFile=-/opt/kubernetes/etc/etcd.conf
 ExecStart=/opt/kubernetes/bin/etcd --config-file /opt/kubernetes/etc/etcd.conf
 User=etcd
 Restart=always
@@ -65,9 +65,6 @@ LimitNOFILE=65536
 [Install]
 WantedBy=multi-user.target
 </file>
-
-mkdir -p /opt/kubernetes/etc/etcd
-
 
 <file name="/opt/kubernetes/etc/etcd.conf">
 # This is the configuration file for the etcd server.
@@ -95,10 +92,10 @@ election-timeout: 1000
 quota-backend-bytes: 0
 
 # List of comma separated URLs to listen on for peer traffic.
-listen-peer-urls: http://&hostaddr;:2380
+listen-peer-urls: https://&hostaddr;:2380
 
 # List of comma separated URLs to listen on for client traffic.
-listen-client-urls: http://&hostaddr;:2379,http://127.0.0.1:2379
+listen-client-urls: https://&hostaddr;:2379,https://127.0.0.1:2379
 
 # Maximum number of snapshot files to retain (0 is unlimited).
 max-snapshots: 5
@@ -111,11 +108,11 @@ cors:
 
 # List of this member's peer URLs to advertise to the rest of the cluster.
 # The URLs needed to be a comma-separated list.
-initial-advertise-peer-urls: http://&hostaddr;:2380
+initial-advertise-peer-urls: https://&hostaddr;:2380
 
 # List of this member's client URLs to advertise to the public.
 # The URLs needed to be a comma-separated list.
-advertise-client-urls: http://&hostaddr;:2379
+advertise-client-urls: https://&hostaddr;:2379
 
 # Discovery URL used to bootstrap the cluster.
 discovery: 
@@ -143,7 +140,8 @@ for a in actions:
 	val = a.split(':')[-1].strip()
 	if cmd.str2bool(val) == True:
 		ip = api.Call('report.host.attr',[node,'attr=hostaddr'])
-		url = '%s.&domainname;=http://%s:2380' % (node,ip[0])
+		url = '%s.&domainname;=https://%s:2380' % (node,ip[0])
+#		url = 'https://%s:2380' % (ip[0])
 		nodes.append(url)
 print 'initial-cluster:', ','.join(nodes[:])
 </eval>
@@ -180,16 +178,16 @@ client-transport-security:
   ca-file: 
 
   # Path to the client server TLS cert file.
-  cert-file:
+  cert-file: /opt/kubernetes/etc/certs.d/etcd-server.pem
 
   # Path to the client server TLS key file.
-  key-file:
+  key-file: /opt/kubernetes/etc/certs.d/etcd-server-key.pem
 
   # Enable client cert authentication.
-  client-cert-auth:
+  client-cert-auth: true
 
   # Path to the client server TLS trusted CA key file.
-  trusted-ca-file:
+  trusted-ca-file: /opt/kubernetes/etc/certs.d/ca.pem
 
   # Client TLS using generated certificates
   auto-tls: false
@@ -199,16 +197,16 @@ peer-transport-security:
   ca-file:
 
   # Path to the peer server TLS cert file.
-  cert-file:
+  cert-file: /opt/kubernetes/etc/certs.d/etcd-member.pem
 
   # Path to the peer server TLS key file.
-  key-file:
+  key-file: /opt/kubernetes/etc/certs.d/etcd-member-key.pem
 
   # Enable peer client cert authentication.
-  client-cert-auth: false
+  client-cert-auth: true
 
   # Path to the peer server TLS trusted CA key file.
-  trusted-ca-file: /etc/pki/tls/certs/ca-bundle.crt
+  trusted-ca-file: /opt/kubernetes/etc/certs.d/ca.pem
 
   # Peer TLS using generated certificates.
   auto-tls: false
@@ -231,6 +229,9 @@ chmod 755 /usr/share/flannel/mk-docker-opts.sh
 
 <file name="/opt/kubernetes/etc/flannel">
 FLANNEL_ETCD_PREFIX="--etcd-prefix=&etcd.prefix;"
+FLANNEL_ETCD_CAFILE="--etcd-cafile=/op/kubernetes/etc/etcd-server.pem"
+FLANNEL_ETCD_CERTFILE="--etcd-keyfile=/op/kubernetes/etc/etcd-server-key.pem"
+FLANNEL_ETCD_KEYFILE="--etcd-certfile=/op/kubernetes/etc/etcd-server.pem"
 <eval shell="/opt/stack/bin/python" mode="xml">
 import stack.api as api
 import stack.commands as cmd
@@ -244,7 +245,7 @@ for a in actions:
 	val = a.split(':')[-1].strip()
 	if cmd.str2bool(val) == True:
 		ip = api.Call('report.host.attr',[node,'attr=hostaddr'])
-		url = 'http://%s:2379' % (ip[0])
+		url = 'https://%s:2380' % (ip[0])
 		urls.append(url)
 
 print 'FLANNEL_ETCD_ENDPOINTS="--etcd-endpoints=%s"' % ','.join(urls[:])
@@ -258,7 +259,12 @@ Before=docker.service
 
 [Service]
 EnvironmentFile=-/opt/kubernetes/etc/flannel
-ExecStart=/opt/kubernetes/bin/flanneld --ip-masq=true ${FLANNEL_ETCD_PREFIX} ${FLANNEL_ETCD_ENDPOINTS}
+ExecStart=/opt/kubernetes/bin/flanneld --ip-masq=true \
+	${FLANNEL_ETCD_PREFIX} \
+	${FLANNEL_ETCD_ENDPOINTS} \
+	${FLANNEL_ETCD_CAFILE} \
+	${FLANNEL_ETCD_KEYFILE} \
+	${FLANNEL_ETCD_CERTFILE}
 Restart=always
 RestartSec=10
 Type=notify
@@ -282,7 +288,13 @@ systemctl enable docker
 [Service]
 EnvironmentFile=-/etc/sysconfig/docker-network
 ExecStart=
-ExecStart=/usr/bin/dockerd --storage-driver=overlay $DOCKER_OPTS --insecure-registry &kube.master_ip;:5000
+ExecStart=/usr/bin/dockerd 
+	--storage-driver=overlay \
+	--insecure-registry &kube.master_ip;:5000 \
+        ${DOCKER_OPT_BIP} \
+	${DOCKER_OPT_IPMASQ} \
+	${DOCKER_OPT_MTU} \
+	-H tcp://0.0.0.0:2376 -H fd:// -D
 Restart=always
 RestartSec=10
 </file>
@@ -291,28 +303,24 @@ RestartSec=10
 <post cond="&docker.registry.external;"> 
 <file name="/etc/systemd/system/docker.service.d/override.conf">
 [Service]
-EnvironmentFile=-/etc/sysconfig/docker
 EnvironmentFile=-/etc/sysconfig/docker-network
 ExecStart=
-ExecStart=/usr/bin/dockerd --storage-driver=overlay $DOCKER_NETWORK_OPTS $DOCKER_OPTS
+ExecStart=/usr/bin/dockerd \
+	--storage-driver=overlay \
+	--tlsverify \
+	--tlscacert=/etc/docker/certs.d/ca.pem \
+	--tlscert=/etc/docker/certs.d/server-cert.pem \
+	--tlskey=/etc/docker/certs.d/server-key.pem \
+	${DOCKER_OPT_BIP} \
+	${DOCKER_OPT_IPMASQ} \
+	${DOCKER_OPT_MTU} \
+	-H tcp://0.0.0.0:2376 -H fd:// -D
 Restart=always
 RestartSec=10
 </file>
 </post>
 
-<!-- tls -->
-<post>
-mkdir -p /srv/kubernetes
-cd /opt/kubernetes/easyrsa3
-./easyrsa init-pki &gt; /root/keys.log 2&gt;&amp;1
-./easyrsa --batch "--req-cn=&kube.master_ip;@`date +%s`" build-ca nopass &gt;&gt; /root/keys.log 2&gt;&amp;1
-./easyrsa --subject-alt-name="IP:&kube.master_ip;" build-server-full kubernetes-master nopass &gt;&gt; /root/keys.log 2&gt;&amp;1
-cp ./pki/ca.crt /srv/kubernetes/ca.crt &gt;&gt; /root/keys.log 2&gt;&amp;1
-cp ./pki/issued/kubernetes-master.crt /srv/kubernetes/server.crt &gt;&gt; /root/keys.log 2&gt;&amp;1
-cp ./pki/private/kubernetes-master.key /srv/kubernetes/server.key &gt;&gt; /root/keys.log 2&gt;&amp;1
-</post>
-
-<boot order="post" cond="&kube.master;">
+<boot order="post">
 /opt/kubernetes/bin/etcdctl mkdir &etcd.prefix;
 
 NETWORK='{ "Network": "10.1.0.0/16", "SubnetLen": 24, "SubnetMin": "10.1.10.0", "SubnetMax": "10.1.30.0", "Backend": { "Type": "udp", "Port": 7890 } }'
@@ -322,9 +330,8 @@ echo ${NETWORK} | /opt/kubernetes/bin/etcdctl set &etcd.prefix;/config
 systemctl daemon-reload
 systemctl restart etcd flanneld
 
-/usr/share/flannel/mk-docker-opts.sh -d /etc/sysconfig/docker-network
+/usr/share/flannel/mk-docker-opts.sh -i -d /etc/sysconfig/docker-network
 systemctl daemon-reload
 systemctl restart docker
 </boot>
-
 </kickstart>

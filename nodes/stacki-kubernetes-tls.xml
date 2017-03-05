@@ -1,0 +1,362 @@
+<?xml version="1.0" standalone="no"?>
+<kickstart>
+
+<description>
+Kubernetes pallet backend base
+</description>
+
+<package>cfssl</package>
+
+<post>
+<file name="/opt/kubernetes/pki/ca-config.json">
+<eval>
+cat /opt/kubernetes/pki/ca-config.json
+</eval>
+</file>
+
+<file name="/opt/kubernetes/pki/ca.pem">
+<eval>
+cat /opt/kubernetes/pki/ca.pem
+</eval>
+</file>
+
+<file name="/opt/kubernetes/pki/ca-key.pem">
+<eval>
+cat /opt/kubernetes/pki/ca-key.pem
+</eval>
+</file>
+<file name="/opt/kubernetes/pki/etcd-server.json">
+{
+  "CN": "etcd server",
+  "hosts": [
+	"127.0.0.1",
+	"&hostaddr;",
+	"&hostname;",
+	"*.&Kickstart_PrivateDNSDomain;",
+	"*.&Kickstart_PublicDNSDomain;"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "&Info_CertificateCountry;",
+      "L": "&Info_CertificateLocality;",
+      "O": "&Info_Certificate_Organization;",
+      "OU": "&Kickstart_PrivateHostname;",
+      "ST": "&Info_CertificateState;"
+    }
+  ]
+}
+</file>
+
+<file name="/opt/kubernetes/pki/etcd-member.json">
+{
+  "CN": "etcd member",
+  "hosts": [
+	"127.0.0.1",
+	"&hostaddr;",
+	"&hostname;",
+	"*.&Kickstart_PrivateDNSDomain;",
+	"*.&Kickstart_PublicDNSDomain;"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "&Info_CertificateCountry;",
+      "L": "&Info_CertificateLocality;",
+      "O": "&Info_Certificate_Organization;",
+      "OU": "&Kickstart_PrivateHostname;",
+      "ST": "&Info_CertificateState;"
+    }
+  ]
+}
+</file>
+<file name="/opt/kubernetes/pki/docker-client-csr.json">
+{
+  "CN": "docker-client",
+  "hosts": [
+	"127.0.0.1",
+	"&hostaddr;",
+	"&hostname;",
+	"*.&Kickstart_PrivateDNSDomain;",
+	"*.&Kickstart_PublicDNSDomain;"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "&Info_CertificateCountry;",
+      "L": "&Info_CertificateLocality;",
+      "O": "&Info_Certificate_Organization;",
+      "OU": "&Kickstart_PrivateHostname;",
+      "ST": "&Info_CertificateState;"
+    }
+  ]
+}
+</file>
+<file name="/opt/kubernetes/pki/docker-server-csr.json">
+{
+  "CN": "docker-server",
+  "hosts": [
+    "127.0.0.1",
+    "&hostaddr;",
+    "&hostname;",
+    "*.&Kickstart_PrivateDNSDomain;",
+    "*.&Kickstart_PublicDNSDomain;"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "&Info_CertificateCountry;",
+      "L": "&Info_CertificateLocality;",
+      "O": "Docker",
+      "OU": "Docker Engine",
+      "ST": "&Info_CertificateState;"
+    }
+  ]
+}
+</file>
+<file name="/opt/kubernetes/pki/kube-apiserver-server-csr.json">
+{
+  "CN": "kube-apiserver",
+  "hosts": [
+    "127.0.0.1",
+    "&hostaddr;",
+    "&hostname;",
+    "*.&Kickstart_PrivateDNSDomain;",
+    "*.&Kickstart_PublicDNSDomain;"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "&Info_CertificateCountry;",
+      "L": "&Info_CertificateLocality;",
+      "O": "Kubernetes",
+      "OU": "API Server",
+      "ST": "&Info_CertificateState;"
+    }
+  ]
+}
+</file>
+<file name="/opt/kubernetes/pki/kube-controller-manager-client-csr.json">
+{
+  "CN": "kube-controller-manager",
+  "hosts": [
+    "127.0.0.1",
+    "&hostaddr;",
+    "&hostname;",
+    "*.&Kickstart_PrivateDNSDomain;",
+    "*.&Kickstart_PublicDNSDomain;"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "&Info_CertificateCountry;",
+      "L": "&Info_CertificateLocality;",
+      "O": "Kubernetes",
+      "OU": "Controller Manager",
+      "ST": "&Info_CertificateState;"
+    }
+  ]
+}
+</file>
+<file name="/opt/kubernetes/pki/kubelet-client-csr.json">
+{
+  "CN": "kubelet",
+  "hosts": [
+    "127.0.0.1",
+    "&hostaddr;",
+    "&hostname;",
+    "*.&Kickstart_PrivateDNSDomain;",
+    "*.&Kickstart_PublicDNSDomain;"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "&Info_CertificateCountry;",
+      "L": "&Info_CertificateLocality;",
+      "O": "Kubernetes",
+      "OU": "Kubelet",
+      "ST": "&Info_CertificateState;"
+    }
+  ]
+}
+</file>
+<file name="/opt/kubernetes/pki/kube-proxy-client-csr.json">
+{
+  "CN": "kube-proxy",
+  "hosts": [
+    "127.0.0.1",
+    "&hostaddr;",
+    "&hostname;",
+    "*.&Kickstart_PrivateDNSDomain;",
+    "*.&Kickstart_PublicDNSDomain;"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "&Info_CertificateCountry;",
+      "L": "&Info_CertificateLocality;",
+      "O": "Kubernetes",
+      "OU": "Kubernetes Proxy",
+      "ST": "&Info_CertificateState;"
+    }
+  ]
+}
+</file>
+<file name="/opt/kubernetes/pki/kubernetes-admin-user.csr.json">
+{
+  "CN": "kubeadmin",
+  "hosts": [
+    "127.0.0.1",
+    "&hostaddr;",
+    "&hostname;",
+    "*.&Kickstart_PrivateDNSDomain;",
+    "*.&Kickstart_PublicDNSDomain;"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "&Info_CertificateCountry;",
+      "L": "&Info_CertificateLocality;",
+      "O": "Kubernetes",
+      "OU": "Cluster Admins",
+      "ST": "&Info_CertificateState;"
+    }
+  ]
+}
+</file>
+<file name="/opt/kubernetes/pki/kube-scheduler-client-csr.json">
+{
+  "CN": "kube-scheduler",
+  "hosts": [
+    "127.0.0.1",
+    "&hostaddr;",
+    "&hostname;",
+    "*.&Kickstart_PrivateDNSDomain;",
+    "*.&Kickstart_PublicDNSDomain;"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "&Info_CertificateCountry;",
+      "L": "&Info_CertificateLocality;",
+      "O": "Kubernetes",
+      "OU": "Scheduler",
+      "ST": "&Info_CertificateState;"
+    }
+  ]
+}
+</file>
+</post>
+<!-- gen certs -->
+<!-- docker -->
+<post>
+export PATH=$PATH:/opt/kubernetes/bin
+cd /opt/kubernetes/pki
+
+cfssl gencert \
+-ca=ca.pem \
+-ca-key=ca-key.pem \
+-config=ca-config.json \
+-profile=server \
+docker-server-csr.json | cfssljson -bare docker-server
+
+cfssl gencert \
+-ca=ca.pem \
+-ca-key=ca-key.pem \
+-config=ca-config.json \
+-profile=client \
+docker-client-csr.json | cfssljson -bare docker-client
+
+<!-- kubernetes -->
+
+cfssl gencert \
+-ca=ca.pem \
+-ca-key=ca-key.pem \
+-config=ca-config.json \
+-profile=server \
+kube-apiserver-server-csr.json | cfssljson -bare kube-apiserver-server
+
+cfssl gencert \
+-ca=ca.pem \
+-ca-key=ca-key.pem \
+-config=ca-config.json \
+-profile=client \
+kubelet-client-csr.json | cfssljson -bare kubelet-client
+
+cfssl gencert \
+-ca=ca.pem \
+-ca-key=ca-key.pem \
+-config=ca-config.json \
+-profile=client \
+kube-proxy-client-csr.json | cfssljson -bare kube-proxy-client
+
+cfssl gencert \
+-ca=ca.pem \
+-ca-key=ca-key.pem \
+-config=ca-config.json \
+-profile=client \
+kubernetes-admin-user.csr.json | cfssljson -bare kubernetes-admin-user
+
+<!-- peers -->
+cfssl gencert \
+-ca=ca.pem \
+-ca-key=ca-key.pem \
+-config=ca-config.json \
+-profile=peer etcd-member.json | cfssljson -bare etcd-member
+
+cfssl gencert \
+-ca=ca.pem \
+-ca-key=ca-key.pem \
+-config=ca-config.json \
+-profile=server etcd-server.json | cfssljson -bare etcd-server
+
+chmod 0444 *.pem
+chmod 0400 *key.pem
+chmod 0444 etcd-member-key.pem
+chown etcd:etcd etcd-*.pem
+</post>
+<post>
+mkdir /root/.docker
+mv -f /opt/kubernetes/pki/docker-client-key.pem /root/.docker/key.pem
+mv -f /opt/kubernetes/pki/docker-client.pem /root/.docker/cert.pem
+mv -f /opt/kubernetes/pki/docker-server-key.pem /etc/docker/certs.d/server-key.pem
+mv -f /opt/kubernetes/pki/docker-server.pem /etc/docker/certs.d/server-cert.pem
+rm -f /etc/docker/certs.d/ca.pem
+cp /opt/kubernetes/pki/ca.pem /etc/docker/certs.d/
+cp /opt/kubernetes/pki/ca.pem /root/.docker
+mkdir /opt/kubernetes/etc/certs.d
+mv /opt/kubernetes/pki/*.pem /opt/kubernetes/etc/certs.d/
+cd /opt/kubernetes/pki
+rm -f docker-* kube* ca*
+</post>
+</kickstart>

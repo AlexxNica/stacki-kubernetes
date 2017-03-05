@@ -12,9 +12,218 @@
 	All rights reserved. stacki(r) v3.3 stacki.com
 	</si_copyright>
 
+<package>cfssl</package>
 <post>
 stack set attr attr=sync.hosts value=True
 mkdir -p /var/www/html/install/kubernetes/pods
+</post>
+
+<post>
+<file name="/opt/kubernetes/pki/ca-config.json">
+{
+    "signing": {
+        "default": {
+            "expiry": "43800h"
+        },
+        "profiles": {
+            "server": {
+                "expiry": "43800h",
+                "usages": [
+                    "signing",
+                    "key encipherment",
+                    "server auth"
+                ]
+            },
+            "client": {
+                "expiry": "43800h",
+                "usages": [
+                    "signing",
+                    "key encipherment",
+                    "client auth"
+                ]
+            },
+            "peer": {
+                "expiry": "43800h",
+                "usages": [
+                    "signing",
+                    "key encipherment",
+                    "server auth",
+                    "client auth"
+                ]
+            }
+        }
+    }
+}
+</file>
+<file name="/opt/kubernetes/pki/ca-csr.json">
+{
+  "CN": "&Info_ClusterName;",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "&Info_CertificateCountry;",
+      "L": "&Info_CertificateLocality;",
+      "O": "&Info_Certificate_Organization;",
+      "OU": "&Kickstart_PrivateHostname;",
+      "ST": "&Info_CertificateState;"
+    }
+  ]
+}
+</file>
+</post>
+
+<post>
+export PATH=$PATH:/opt/kubernetes/bin
+cd /opt/kubernetes/pki
+cfssl gencert -initca ca-csr.json | cfssljson -bare ca
+chmod 640 /opt/kubernetes/pki/*csr*
+chmod 444 /opt/kubernetes/pki/ca.pem
+chmod 440 /opt/kubernetes/pki/ca-key.pem
+chown root:apache /opt/kubernetes/pki/ca*
+</post>
+
+<post>
+<file name="/export/stack/kubernetes/pods/kubernetes-dashboard-secure.yaml">
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: kubernetes-dashboard
+  name: kubernetes-dashboard
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubernetes-dashboard
+  template:
+    metadata:
+      labels:
+        app: kubernetes-dashboard
+    spec:
+      containers:
+      - name: kubernetes-dashboard
+        image: gcr.io/google_containers/kubernetes-dashboard-amd64:canary
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 9090
+          protocol: TCP
+        volumeMounts:
+        - name: "kubeconfig"
+          mountPath: "/opt/kubernetes/etc/"
+          readOnly: true
+        args:
+          - --kubeconfig=/opt/kubernetes/etc/kubeconfig
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 9090
+          initialDelaySeconds: 30
+          timeoutSeconds: 30
+      volumes:
+      - name: "kubeconfig"
+        hostPath:
+          path: "/opt/kubernetes/etc/"
+---
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    app: kubernetes-dashboard
+  name: kubernetes-dashboard
+  namespace: kube-system
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    targetPort: 9090
+  selector:
+    app: kubernetes-dashboard
+</file>
+<file name="/export/stack/kubernetes/pods/kubernetes-dashboard.yaml">
+# Copyright 2015 Google Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Configuration to deploy release version of the Dashboard UI.
+#
+# Example usage: kubectl create -f &gt;this_file&gt;
+
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  labels:
+    app: kubernetes-dashboard
+  name: kubernetes-dashboard
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubernetes-dashboard
+  template:
+    metadata:
+      labels:
+        app: kubernetes-dashboard
+      # Comment the following annotation if Dashboard must not be deployed on master
+      annotations:
+        scheduler.alpha.kubernetes.io/tolerations: |
+          [
+            {
+              "key": "dedicated",
+              "operator": "Equal",
+              "value": "master",
+              "effect": "NoSchedule"
+            }
+          ]
+    spec:
+      containers:
+      - name: kubernetes-dashboard
+        image: gcr.io/google_containers/kubernetes-dashboard-amd64:canary
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 9090
+          protocol: TCP
+        args:
+          # Uncomment the following line to manually specify Kubernetes API server Host
+          # If not specified, Dashboard will attempt to auto discover the API server and connect
+          # to it. Uncomment only if the default does not work.
+          - --apiserver-host=http://10.1.255.254:8080
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 9090
+          initialDelaySeconds: 30
+          timeoutSeconds: 30
+---
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    app: kubernetes-dashboard
+  name: kubernetes-dashboard
+  namespace: kube-system
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    targetPort: 9090
+  selector:
+    app: kubernetes-dashboard
+</file>
 </post>
 
 </kickstart>
