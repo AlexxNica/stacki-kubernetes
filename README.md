@@ -328,6 +328,14 @@ Booleans are cool because true/false/yes/no/y/n/1/0 all work and they can be cap
 So let's explicate:
 
 ```
+Target = kube.secure
+Global Value = True
+Used for: Running kubernetes/docker with TLS/SSL termination.
+Host change: No, don't do that.
+```
+Leave this alone. You really want this to run securely.
+
+```
 Target = kube.master
 Global Value = False
 Used for: setting which node is the Kubernetes master. You need one.
