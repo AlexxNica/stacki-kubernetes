@@ -207,10 +207,36 @@ So in any event, we assume you have backend nodes. They don't have kubernetes on
 
 So to create your attrfile, just adapt the example here and add them. After the spreadsheet, we'll go through what this means. However, if this is the first time you've encountered a spreadsheet attribute file, go review this [here]<sup name="a6">[6](#f6)</sup> which apparently I'm now writing also.
 
+<h3>An attributes digression</h3>
+I'll give a brief explanation here:
+
+"Attributes" or key/value pairs, allow us to customize the install of a bunch of nodes or individual nodes depending how they've been set. This allows us to enable or disable functionality for a set of hosts or individual hosts without having to generate multiple kickstart files. They can be used for configuration settings, or as conditionals in Kickstart files to fire off or not fire off a configuration.
+
+Attributes allow us flexibility; however, it comes at the cost of complexity. More attributes mean more knobs to turn and buttons to push. It makes for a steeper learning curve. (I would put forth the proposition that even with the added complexity of attributes, Stacki is still simpler to wrap your head around than Cobbler/MaaS/Satellite/Spacewalk/Foreman or, deity forbid, Ironic. (Which, if you've ever tried to use it, turns out to be a play on it's own name.)
+
+So let's go through this a little more completely so you know what you're getting.
+
+Line 1, the "target" line, is the header line. The targets are the "key" part in the attributes pair.
+
+Line 2, the "global" line, represents the values for each key in the targets line.
+
+So attributes = key/value pair. Target = key, global = value. One key, one value and this particular file sets these keys needed to configure Docker at a global level.
+
+You can set key/value pairs at different levels: there's the "global" level pictured above, the "appliance" level which applies only to appliances of a certain kind, (You only have a backend appliance right now so this is not valid at this point.) and a "host" level which applies only to a specific host. This allows us to change the default global setting for individual hosts or groups of hosts. Values are hierarchical and the last one wins. "host" is the lowest level so if an attribute is set at the "host" level, that's the value that's used. Otherwise, the default "global" value is used.
+
+You'll see two types of values for attributes: booleans and strings. I generally use booleans to turn on or off features. If a feature is turned on, the service might require further configuration, in which case there will be an attribute that sets a value to modify the configuration based on site requirements.
+
+With boolean attributes, True, true, yes, Yes, 1 all evaluate to true "true," and any value of False, false, no, No, NO, 0, evaluate to true "false."
+
+If an attribute evaluates to string, the value of the string will be used. It's a variable called in a funky way in the kickstart.
+<h3>End Attributes Digression</h3>
+
 Do the following:
 
 I've included a few spreadsheets for you to adopt/adapt/disregard. These should be installed when you run the stacki-kubernetes pallet.
 So let's go find them and look at them.
+
+
 
 ```
 # cd /export/stack/spreadsheets/examples/
@@ -221,10 +247,18 @@ global-kubernetes-attrs.csv
 hosts-kubernetes-attrs.csv
 kubernetes-partitions.csv
 ```
-I'll explain them in order, and then we'll go into further detail because you will/may want to change attributes for your cluster
+I'll explain the files, and then we'll go into further detail on the attributes because you will/may want to change attributes for your cluster.
 
-There are three files:
-Open it with your favorite editor<sup name="a7">[7](#f7)</sup>, Excel/Libre Office/Google Spreadsheets
+The global-kubernetes-attrs.csv contains only attributes at a global level. It's easier to see if you just have to deal with one line of keys and values.
+
+The hosts-kubernetes-attrs.csv shows the changes for our example backend nodes without the global values being defined. Again easier to see.
+
+The full-kubernetes-attrs.csv file is the combined hosts-kubernetes-attrs.csv and global-kubernetes-attrs.csv files. Not as easy to see, but easier to use because you take care of everything all at once. 
+
+The kubernetes-partitions.csv file will be used for partitioning. We use overlay fs for Docker and that needs a little extra something to get it to work with Docker correctly. 
+
+We're going to 
+Open it with your favorite editor <sup name="a7">[7](#f7)</sup>, Excel/Libre Office/Google Spreadsheets
 
 It looks like [this](https://github.com/StackIQ/stacki-kubernetes/blob/master/spreadsheets/kubernetes-attrs.csv)
 
@@ -239,6 +273,8 @@ It looks like [this](https://github.com/StackIQ/stacki-kubernetes/blob/master/sp
 
 
 The goal here is to edit this file so that it reflects your site and needs, not mine. Since there isn't currently a page to describe attributes and what they are used for, I will do so here.
+
+We'll go through each of these values and tell you why it exists, what it will do at the current default setting, and why you might want to change it. This will be valuable when you add backend hosts below and whant to change the role they play in the Docker set-up.
 
 Actually, I sum up, then I write the attributes documentation.
 
@@ -546,6 +582,8 @@ Get on googlegroups or the Stacki Slack channel and tell us what you need. You h
 
 <sup name="f5">[5](#a5)</sup> If you've seen any of the Kubernetes documentation, there are multiple ways to skin this particular software cat. We aren't doing those. If you want, you can just use Stacki to get the machines to a ping and a prompt and then use another/other tools for deploying Kubernetes. But then, you're not running it on bare metal anymore if that's a priority for you.
 
-<sup name="f6">[6](#a6)</sup> vim or swim! I guess you could use emacs, but that means you're probably a developer and why are you reading this? 
+<sup name="a6">[6](#f6)</sup> There should a link here about attributes and how to use them. Apparently, no one has ever written this. I will do so, next week. Really. Next. Week.
 
-<sup name="a7">[7](#f7)</sup> There should a link here about attributes and how to use them. Apparently, no one has ever written this. I will do so, next week. Really. Next. Week.
+<sup name="f7">[7](#a7)</sup> vim or swim! I guess you could use emacs, but that means you're probably a developer and why are you reading this? 
+
+
