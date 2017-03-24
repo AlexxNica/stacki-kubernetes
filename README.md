@@ -1,6 +1,8 @@
 
 # Stacki+Kubernetes Cluster Install
 
+This is the documentation for phase2 of the stacki-kubernetes. It locks all systemd kubernetes services with SSL/TLS termination, for both clients and servers. You're welcome.
+
 ### tl;dr
 Really? You don't want to read this? It's the best README you'll ever encounter. 
 
@@ -12,10 +14,10 @@ We assume you have:
 3. Time, patience, no need to answer the question "Why?"
 
 * Download these to your frontend
-- [CentOS-7.2](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-7-x86_64-Everything-1511.iso)
-- [CentOS-7.2 Updates](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-Updates-7.2-0.x86_64.disk1.iso)
-- [stacki-docker](https://s3.amazonaws.com/stacki/public/pallets/3.2/open-source/stacki-docker-1.13.0-7.x.x86_64.disk1.iso)
-- [stacki-kubernetes](http://stacki.s3.amazonaws.com/public/pallets/3.2/open-source/stacki-kubernetes-1.5.2-7.x_p1.x86_64.disk1.iso)
+- [CentOS-7.3](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-7-x86_64-Everything-1611.iso)
+- [CentOS-7.3 Updates](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-Updates-7.3-7.x.x86_64.disk1.iso)
+- [stacki-docker-17-03 phase2](https://s3.amazonaws.com/stacki/public/pallets/3.2/open-source/stacki-docker-17.03.0-3.2_phase2.x86_64.disk1.iso)
+- [stacki-kubernetes](http://stacki.s3.amazonaws.com/public/pallets/3.2/open-source/stacki-kubernetes-1.5.2-7.x_p2.x86_64.disk1.iso)
 
 * Install, enable, and then run stacki-kubernetes:
 ```
@@ -28,13 +30,19 @@ We assume you have:
 
 * Prepare spreadsheet.
 ```
-wget --no-check-certificate https://github.com/StackIQ/stacki-kubernetes/blob/master/spreadsheets/kubernetes-attrs.csv
+# yum install -y stacki-kubernetes-spreadsheets
 
-Edit it and change the "backend-0-?" hostnames to your hostnames"
+# cd /export/stack/spreadsheets/examples
+```
+
+Edit full-kubernetes-attrs.csv change the "backend-0-?" hostnames to your 
+hostnames. Edit any ip addresses for the master ip. This is easier opened 
+in Excel or Google Spreadsheet. Export it back csv on your frontend.
+then
 
 Add it:
-
-# stack load attrfile file=kubernetes-attrs.csv
+```
+# stack load attrfile file=full-kubernetes-attrs.csv
 
 ```
 
