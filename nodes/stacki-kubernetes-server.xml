@@ -13,6 +13,7 @@
 	</si_copyright>
 
 <package>cfssl</package>
+<package>stacki-kubernetes-spreadsheets</package>
 
 <post>
 stack set attr attr=sync.hosts value=True
