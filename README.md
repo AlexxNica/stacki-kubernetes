@@ -13,11 +13,12 @@ We assume you have:
 2. Either backend nodes already installed or a hostfile you're going to load.
 3. Time, patience, no need to answer the question "Why?"
 
+
 * Download these to your frontend
-- [CentOS-7.3](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-7-x86_64-Everything-1611.iso)
-- [CentOS-7.3 Updates](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-Updates-7.3-7.x.x86_64.disk1.iso)
-- [stacki-docker-17-03 phase2](https://s3.amazonaws.com/stacki/public/pallets/3.2/open-source/stacki-docker-17.03.0-3.2_phase2.x86_64.disk1.iso)
-- [stacki-kubernetes](http://stacki.s3.amazonaws.com/public/pallets/3.2/open-source/stacki-kubernetes-1.5.4-7.x_p2.x86_64.disk1.iso)
+    - [CentOS-7.3](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-7-x86_64-Everything-1611.iso)
+    - [CentOS-7.3 Updates](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-Updates-7.3-7.x.x86_64.disk1.iso)
+    - [stacki-docker-17-03 phase2](https://s3.amazonaws.com/stacki/public/pallets/3.2/open-source/stacki-docker-17.03.0-3.2_phase2.x86_64.disk1.iso)
+    - [stacki-kubernetes](http://stacki.s3.amazonaws.com/public/pallets/3.2/open-source/stacki-kubernetes-1.5.4-7.x_p2.x86_64.disk1.iso)
 
 * Install, enable, and then run stacki-kubernetes:
 ```
