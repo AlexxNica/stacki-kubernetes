@@ -18,7 +18,6 @@ We assume you have:
 - [CentOS-7.3 Updates](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-Updates-7.3-7.x.x86_64.disk1.iso)
 - [stacki-docker-17-03 phase2](https://s3.amazonaws.com/stacki/public/pallets/3.2/open-source/stacki-docker-17.03.0-3.2_phase2.x86_64.disk1.iso)
 - [stacki-kubernetes](http://stacki.s3.amazonaws.com/public/pallets/3.2/open-source/stacki-kubernetes-1.5.4-7.x_p2.x86_64.disk1.iso)
-```
 
 * Install, enable, and then run stacki-kubernetes:
 ```
@@ -31,9 +30,7 @@ We assume you have:
 
 * Prepare spreadsheet.
 ```
-# yum install -y stacki-kubernetes-spreadsheets
-
-# cd /export/stack/spreadsheets/examples
+# cd /export/stack/spreadsheets/examples/
 ```
 
 Edit full-kubernetes-attrs.csv change the "backend-0-?" hostnames to your 
@@ -212,13 +209,19 @@ So to create your attrfile, just adapt the example here and add them. After the 
 
 Do the following:
 
-Get the example spreadsheet file from the repository:
+I've included a few spreadsheets for you to adopt/adapt/disregard. These should be installed when you run the stacki-kubernetes pallet.
+So let's go find them and look at them.
 
 ```
-# yum install -y stacki-kubernetes-spreadsheets
+# cd /export/stack/spreadsheets/examples/
 
-# cd /export/stack/spreadsheets/examples
+# ls -1
+full-kubernetes-attrs.csv
+global-kubernetes-attrs.csv
+hosts-kubernetes-attrs.csv
+kubernetes-partitions.csv
 ```
+I'll explain them in order, and then we'll go into further detail because you will/may want to change attributes for your cluster
 
 There are three files:
 Open it with your favorite editor<sup name="a7">[7](#f7)</sup>, Excel/Libre Office/Google Spreadsheets
