@@ -1,5 +1,5 @@
 
-# Stacki+Kubernetes Cluster Install
+# Stacki+Kubernetes Cluster Install - Phase 2
 
 This is the documentation for phase2 of the stacki-kubernetes. It locks all systemd kubernetes services with SSL/TLS termination, for both clients and servers. You're welcome.
 
@@ -17,7 +17,8 @@ We assume you have:
 - [CentOS-7.3](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-7-x86_64-Everything-1611.iso)
 - [CentOS-7.3 Updates](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-Updates-7.3-7.x.x86_64.disk1.iso)
 - [stacki-docker-17-03 phase2](https://s3.amazonaws.com/stacki/public/pallets/3.2/open-source/stacki-docker-17.03.0-3.2_phase2.x86_64.disk1.iso)
-- [stacki-kubernetes](http://stacki.s3.amazonaws.com/public/pallets/3.2/open-source/stacki-kubernetes-1.5.2-7.x_p2.x86_64.disk1.iso)
+- [stacki-kubernetes](http://stacki.s3.amazonaws.com/public/pallets/3.2/open-source/stacki-kubernetes-1.5.4-7.x_p2.x86_64.disk1.iso)
+```
 
 * Install, enable, and then run stacki-kubernetes:
 ```
@@ -38,7 +39,9 @@ We assume you have:
 Edit full-kubernetes-attrs.csv change the "backend-0-?" hostnames to your 
 hostnames. Edit any ip addresses for the master ip. This is easier opened 
 in Excel or Google Spreadsheet. Export it back csv on your frontend.
-then
+
+If you have more hostnames than in this example, add them and assign them roles. 
+Mostly they'll be nodes.
 
 Add it:
 ```
@@ -50,9 +53,9 @@ Add it:
 ```
 # stack set host boot backend action=install
 # stack set host attr backend attr=nukedisks value=True
-
-Reboot your nodes. Wait. 
 ```
+
+Reboot your nodes. Breathe. 
 
 * Access
 
@@ -75,6 +78,8 @@ Go to http://127.0.0.1:9090 in a browser.
 
 ```
 
+There is a little script I'll leave in scripts so you can connect from your desktop to the K8s cluster, assuming you have network access to that subnet. It will be explained further below.
+
 ### Prologue
 ============
 
@@ -92,35 +97,33 @@ and drink the first couple of cups. <sup name="a3">[3](#f3)</sup>
 
 The stacki-kubernetes pallet installed on top of Stacki, will give you a functioning Kubernetes cluster with a kubernetes-dashboard deployment if you request it. 
 
-This is a Phase 1 project. A Phase 1 project for us means: it's going to work, at least as good as what you currently have, and possibly simpler or better than what you currently have,<sup name="a4">[4](#f4)</sup> but it will work. You'll be able to install backend nodes with the current stable version of Kubernetes and run your, or public, containers. 
+This is a Phase 2 project. A Phase 2 project for us means: it's going to work as advertised in the Kubernetes docs only on bare metal, and all the kube daemons are now secure. As in wrapped with SSL/TLS<sup name="a4">[4](#f4)</sup>. You'll be able to install backend nodes with the current stable version of Kubernetes and run your, or public, containers. 
 
 ### Requirements
 
 As in, you need these to make this work. If you don't have all of these, it won't work.
 
 - [stacki-os-3.2](https://s3.amazonaws.com/stacki/3.x/stacki-os-3.2-7.x.x86_64.disk1.iso) (If you already have a Stacki 3.2 frontend up, you don't need this again.)
-- [CentOS-7.2](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-7-x86_64-Everything-1511.iso)
-- [CentOS-7.2 Updates](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-Updates-7.2-0.x86_64.disk1.iso)
-- [stacki-docker](https://s3.amazonaws.com/stacki/public/pallets/3.2/open-source/stacki-docker-1.13.0-7.x.x86_64.disk1.iso)
-- [stacki-kubernetes](http://stacki.s3.amazonaws.com/public/pallets/3.2/open-source/stacki-kubernetes-1.5.2-7.x_p1.x86_64.disk1.iso)
-- You'll need a spreadsheet, an example files in the document. Hopefully a link too.
+- [CentOS-7.3](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-7-x86_64-Everything-1611.iso)
+- [CentOS-7.3 Updates](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-Updates-7.3-7.x.x86_64.disk1.iso)
+- [stacki-docker-17-03 phase2](https://s3.amazonaws.com/stacki/public/pallets/3.2/open-source/stacki-docker-17.03.0-3.2_phase2.x86_64.disk1.iso)
+- [stacki-kubernetes](http://stacki.s3.amazonaws.com/public/pallets/3.2/open-source/stacki-kubernetes-1.5.4-7.x_p2.x86_64.disk1.iso)
 
 You should download these. If you have a Stacki frontend up already, download these to /export which should be the biggest partition on the frontend.
 
 ### Versions (all latest stable)
-- Docker 1.13 (It's in the stacki-docker pallet.)
-- Kubernetes 1.5.2
-- etcd 3.1.0
+- Docker 17.03.0 Community Edition (It's in the stacki-docker pallet.)
+- Kubernetes 1.5.4
+- etcd 3.1.3
 - flannel 0.7.0
 
-This is the current default stack. Docker 1.13 is in the stacki-docker pallet which is why you need it. Everything else for Kubernetes is in the stacki-kubernetes pallet. Phase 1 only uses these versions. Phase 2 will have more options. See the Caveats section for what you may need but this may not have.
+This is the current default stack. Docker 17.03.0 is in the stacki-docker pallet which is why you need it. Everything else for Kubernetes is in the stacki-kubernetes pallet. Phase 2 only uses these versions. Phase 3 will have more options. See the Caveats section for what you may need but this may not have.
 
 ### Caveats
-This is what it doesn't have - yet. If you have opinions on what should be in Phase 2, make it known on the googlegroups or on the Stacki Slack channel.
+This is what it doesn't have - yet. If you have opinions on what should be in Phase 3, make it known on the googlegroups or on the Stacki Slack channel.
 
 - rkt (Really? Go away and leave me alone.)
 - The only overlay network currently supported is flannel.
-- No TLS, nothing secured except by your network. 
 - docker registry runs with "--insecure-registry"
 - No DevOps tools used, just straight kickstart.<sup name="a5">[5](#f5)</sup> So if you've seen the Stacki+Kubernetes+Salt video demo, that's not valid anymore. Salt is not in Stacki unless you put it there. 
 - The only service running in a container is a docker registry if you want it.
@@ -134,7 +137,7 @@ The installation of Kubernetes and subsequent deployment of you cluster requires
 * A working stacki frontend with nodes installed.
 * The stacki-docker pallet
 * The stacki-kubernetes pallet
-* The CentOS-7.2 and CentOS-updates pallets.
+* The CentOS-7.3 and CentOS-Updates pallets.
 
 Luckily, we have made this easy for you.
 
@@ -150,23 +153,13 @@ If downloading to the frontend:
 ```
 # cd /export
 
-# wget --no-check-certificate https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-7-x86_64-Everything-1511.iso 
-# wget --no-check-certificate https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-Updates-7.2-0.x86_64.disk1.iso
-# wget --no-check-certificate https://s3.amazonaws.com/stacki/public/pallets/3.2/open-source/stacki-docker-1.13.0-7.x.x86_64.disk1.iso 
-# wget --no-check-certificate http://stacki.s3.amazonaws.com/public/pallets/3.2/open-source/stacki-kubernetes-1.5.2-7.x_p1.x86_64.disk1.iso 
+# wget --no-check-certificate https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-7-x86_64-Everything-111.iso 
+# wget --no-check-certificate https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-Updates-7.3-7.x.x86_64.disk1.iso
+# wget --no-check-certificate https://s3.amazonaws.com/stacki/public/pallets/3.2/open-source/stacki-docker-17.03.0-3.2_phase2.x86_64.disk1.iso 
+# wget --no-check-certificate http://stacki.s3.amazonaws.com/public/pallets/3.2/open-source/stacki-kubernetes-1.5.4-7.x_p2.x86_64.disk1.iso 
 ```
 
 Either all at once or one at a time.
-
-Check the md5sums.
-```
-# md5sum stacki-kubernetes-1.5.2-7.x_p1.x86_64.disk1.iso stacki-docker-1.13.0-7.x.x86_64.disk1.iso
-```
-
-against the following:
-
-cc4eac50e97dc0169751a2267409b00e  stacki-docker-1.13.0-7.x.x86_64.disk1.iso
-eaee67dc91ad35ebf6a5525e84747661  stacki-kubernetes-1.5.2-7.x_p1.x86_64.disk1.iso
 
 Add and enable the pallets:
 ```
@@ -186,7 +179,14 @@ You MUST disable the OS pallet:
 
 ```
 
-A pallet generally has both frontend and backend configuration. To get the frontend configuration to happen for a pallet that contains it, run the pallet:
+A pallet generally has both frontend and backend configuration. To get the frontend configuration to happen for a pallet that contains it. The stacki-kubernetes pallet needs to be run; however, the stacki-docker pallet should not be run. The stacki-docker pallet does double duty: it provides docker for stacki-kubernetes, and it can be used without stacki-kubernetes. You only run the stacki-docker pallet if it is NOT being used with stacki-kubernetes.
+
+Did you get that. Let me say it again, only louder.
+
+*** Do not run the stacki-docker pallet ***
+
+But you should run the stacki-kubernetes pallet, like this:
+
 ```
 # stack run pallet stacki-kubernetes
 ```
@@ -198,24 +198,30 @@ Then run it for real:
 ```
 ### Preparing backend nodes.
 
-It's our assumption that you have already installed backend nodes with Stacki. Now you want Kubernetes, and you're going to reinstall the backend nodes. Yes, you are, or you're going to look for a different solution.
+It's our assumption that you have already installed backend nodes with Stacki. Now you want Kubernetes, and you're going to reinstall the backend nodes. Yes, you are, or you're going to look for a different solution. 
+
+Or you haven't installed them and you already have a hosts.csv file to add them to the frontend. Add that file first if you have it. 
 
 If you haven't installed backend nodes, I highly recommend installing them with the base installation to shake out any hardware problems and know that they are going to work. Do this before enabling the stacki-docker and stacki-kubernetes pallets. You don't have to, but it's highly recommended. Then enable/re-enable stacki-kubernetes and stacki-docker after adding a spreadsheet for some required attributes, and reinstall the nodes. The reinstalling nodes is the short part of this.
 
-If you haven't installed backend, and you have a host spreadsheet. (See the [Backend Install](https://github.com/StackIQ/stacki/wiki/Backend-Installation) section of our docs.) You  attrfile before installation, but there's more to troubleshoot if something goes wrong. 
+If you haven't installed backends, and you have a host spreadsheet. (See the [Backend Install](https://github.com/StackIQ/stacki/wiki/Backend-Installation) section of our docs.) You can load the attrfile before installation, but there's more to troubleshoot if something goes wrong. 
 
-So in any event, we assume you have backend nodes. They don't have kubernetes on them and you're going to reinstall. You have to add the following attr file. The hostnames may need to change because "backend-?-?" is the default and you may have different host names.
+So in any event, we assume you have backend nodes. They don't have kubernetes on them and you're going to install or reinstall. You have to add the following attr file. The hostnames may need to change because "backend-?-?" is the default and you may have different host names.
 
-So to create your attrfile, just adapt the example here and add them. After the spreadsheet, we'll go through what this means. However, if this is the first time you've encountered a spreadsheet attribute file, go review this here which apparently I'm now writing also.
+So to create your attrfile, just adapt the example here and add them. After the spreadsheet, we'll go through what this means. However, if this is the first time you've encountered a spreadsheet attribute file, go review this [here]<sup name="a6">[6](#f6)</sup> which apparently I'm now writing also.
 
 Do the following:
 
 Get the example spreadsheet file from the repository:
 
 ```
-wget https://github.com/StackIQ/stacki-kubernetes/blob/master/spreadsheets/kubernetes-attrs.csv
+# yum install -y stacki-kubernetes-spreadsheets
+
+# cd /export/stack/spreadsheets/examples
 ```
-Open it with your favorite editor<sup name="a6">[6](#f6)</sup>, Excel/Libre Office/etc.
+
+There are three files:
+Open it with your favorite editor<sup name="a7">[7](#f7)</sup>, Excel/Libre Office/Google Spreadsheets
 
 It looks like [this](https://github.com/StackIQ/stacki-kubernetes/blob/master/spreadsheets/kubernetes-attrs.csv)
 
@@ -538,3 +544,5 @@ Get on googlegroups or the Stacki Slack channel and tell us what you need. You h
 <sup name="f5">[5](#a5)</sup> If you've seen any of the Kubernetes documentation, there are multiple ways to skin this particular software cat. We aren't doing those. If you want, you can just use Stacki to get the machines to a ping and a prompt and then use another/other tools for deploying Kubernetes. But then, you're not running it on bare metal anymore if that's a priority for you.
 
 <sup name="f6">[6](#a6)</sup> vim or swim! I guess you could use emacs, but that means you're probably a developer and why are you reading this? 
+
+<sup name="a7">[7](#f7)</sup> There should a link here about attributes and how to use them. Apparently, no one has ever written this. I will do so, next week. Really. Next. Week.
