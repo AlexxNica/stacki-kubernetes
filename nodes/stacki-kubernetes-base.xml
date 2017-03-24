@@ -5,13 +5,16 @@
 Kubernetes pallet backend base
 </description>
 
+<package disable="1">iwl*</package>
+<package disable="1">ivtv*</package>
+<package meta="1">@coare</package>
 <package>lsof</package>
 <package>wget</package>
 <package>bind-utils</package>
 <package>chrony</package>
 <package>etcd</package>
 <package>flannel</package>
-<package>easyrsa</package>
+<package>socat</package>
 
 <!-- general -->
 <post>
