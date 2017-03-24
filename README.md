@@ -442,13 +442,13 @@ The Docker registry runs insecurely in Phase
 
 Okay, with Docker there are two options: if no nodes don't have internet access, or if at least the frontend has internet access.
 
-######### Cluster is private
+###### Cluster is private
 
 If there are no nodes with internet access, set the docker.registry.local to True. This will create a registry on the master node. You can push docker images to this directory with "docker push master_ip:5000/imagename" and it will work.
 
 To get the kubernetes-dashboard up on a closed network, several docker images have been pre-created and installed on the master node, so that will at least work. But any other images that need to be pulled for your pods, also need to be pushed to the private registry. Including ones you may have in a site registry. This will change in Phase 3.
 
-######### Cluster has one public interface.
+###### Cluster has one public interface.
 
 I'm assuming if you have a public interface it's on the frontend. If all the backends are public facing, just set the docker.registry.external to "True" and be on your way.
 
