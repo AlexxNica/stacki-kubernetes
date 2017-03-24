@@ -13,12 +13,12 @@ We assume you have:
 2. Either backend nodes already installed or a hostfile you're going to load.
 3. Time, patience, no need to answer the question "Why?"
 
+
 * Download these to your frontend
-- [CentOS-7.3](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-7-x86_64-Everything-1611.iso)
-- [CentOS-7.3 Updates](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-Updates-7.3-7.x.x86_64.disk1.iso)
-- [stacki-docker-17-03 phase2](https://s3.amazonaws.com/stacki/public/pallets/3.2/open-source/stacki-docker-17.03.0-3.2_phase2.x86_64.disk1.iso)
-- [stacki-kubernetes](http://stacki.s3.amazonaws.com/public/pallets/3.2/open-source/stacki-kubernetes-1.5.4-7.x_p2.x86_64.disk1.iso)
-```
+    - [CentOS-7.3](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-7-x86_64-Everything-1611.iso)
+    - [CentOS-7.3 Updates](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-Updates-7.3-7.x.x86_64.disk1.iso)
+    - [stacki-docker-17-03 phase2](https://s3.amazonaws.com/stacki/public/pallets/3.2/open-source/stacki-docker-17.03.0-3.2_phase2.x86_64.disk1.iso)
+    - [stacki-kubernetes](http://stacki.s3.amazonaws.com/public/pallets/3.2/open-source/stacki-kubernetes-1.5.4-7.x_p2.x86_64.disk1.iso)
 
 * Install, enable, and then run stacki-kubernetes:
 ```
@@ -31,9 +31,7 @@ We assume you have:
 
 * Prepare spreadsheet.
 ```
-# yum install -y stacki-kubernetes-spreadsheets
-
-# cd /export/stack/spreadsheets/examples
+# cd /export/stack/spreadsheets/examples/
 ```
 
 Edit full-kubernetes-attrs.csv change the "backend-0-?" hostnames to your 
@@ -97,7 +95,7 @@ and drink the first couple of cups. <sup name="a3">[3](#f3)</sup>
 
 The stacki-kubernetes pallet installed on top of Stacki, will give you a functioning Kubernetes cluster with a kubernetes-dashboard deployment if you request it. 
 
-This is a Phase 2 project. A Phase 2 project for us means: it's going to work as advertised in the Kubernetes docs only on bare metal, and all the kube daemons are now secure. As in wrapped with SSL/TLS<sup name="a4">[4](#f4)</sup>. You'll be able to install backend nodes with the current stable version of Kubernetes and run your, or public, containers. 
+This is a Phase 2 project. A Phase 2 project for us means: it's going to work as advertised in the Kubernetes docs only on bare metal, and all the kube daemons are now secure. As in wrapped with SSL/TLS<sup name="a4">[4](#f4)</sup>. You'll be able to install backend nodes with the current stable version of Kubernetes and run your own or public containers. 
 
 ### Requirements
 
@@ -212,30 +210,48 @@ So to create your attrfile, just adapt the example here and add them. After the 
 
 Do the following:
 
-Get the example spreadsheet file from the repository:
+I've included a few spreadsheets for you to adopt/adapt/disregard. These should be installed when you run the stacki-kubernetes pallet.
+So let's go find them and look at them.
 
 ```
-# yum install -y stacki-kubernetes-spreadsheets
+# cd /export/stack/spreadsheets/examples/
 
-# cd /export/stack/spreadsheets/examples
+# ls -1
+full-kubernetes-attrs.csv
+global-kubernetes-attrs.csv
+hosts-kubernetes-attrs.csv
+kubernetes-partitions.csv
 ```
 
-There are three files:
-Open it with your favorite editor<sup name="a7">[7](#f7)</sup>, Excel/Libre Office/Google Spreadsheets
+I'll explain the files, and then we'll go into further detail on the attributes because you will/may want to change attributes for your cluster.
 
-It looks like [this](https://github.com/StackIQ/stacki-kubernetes/blob/master/spreadsheets/kubernetes-attrs.csv)
+The global-kubernetes-attrs.csv contains only attributes at a global level. It's easier to see if you just have to deal with one line of keys and values.
 
-|  target         | kube.master | kube.master_ip  | kube.minion | etcd.prefix     | etcd.cluster_member  | kube.enable_dashboard  | kube.pull_pods  | kube.pod_dir            | docker.registry.local | docker.registry.external | docker.overlay_disk  | sync.hosts |
-| --------------- | ----------- | --------------- | ----------- | --------------- | -------------------- | ---------------------- | --------------- | ----------------------- | --------------------- | ------------------------ | -------------------- | ---------- |
-| global      | False       | 10.1.255.254    | True        | /stacki/network | False                | False                  | True            | install/kubernetes/pods | False                 | True                     | sdb                  | True       |
-| backend-0-0     | True        |                 |             |                 | True                 | True                   |                 |                         |                       |                          |                      |            |
-| backend-0-1     |             |                 |             |                 | True                 |                        |                 |                         |                       |                          |                      |            |
-| backend-0-2     |             |                 |             |                 | True                 |                        |                 |                         |                       |                          |                      |            |
-| backend-0-3     |             |                 |             |                 |                      |                        |                 |                         |                       |                          |                      |            |
-| backend-0-4     |             |                 |             |                 |                      |                        |                 |                         |                       |                          |                      |            |
+The hosts-kubernetes-attrs.csv shows the changes for our example backend nodes without the global values being defined. Again easier to see.
+
+The full-kubernetes-attrs.csv file is the combined hosts-kubernetes-attrs.csv and global-kubernetes-attrs.csv files. Not as easy to see, but easier to use because you take care of everything all at once. 
+
+The kubernetes-partitions.csv file will be used for partitioning. We use overlay fs for Docker and that needs a little extra something to get it to work with Docker correctly. 
+
+We're going to work with the full-kubernetes-attrs.csv for our explanation. 
+
+Open it with your favorite editor <sup name="a7">[7](#f7)</sup>, Excel/Libre Office/Google Spreadsheets
+
+It looks like this:
+
+| target      | kube.secure | kube.master | kube.master_ip | kube.minion | etcd.prefix     | etcd.cluster_member | kube.enable_dashboard | kube.pull_pods | kube.pod_dir            | docker.registry.local | docker.registry.external | sync.hosts | kube.spark_demo | 
+|-------------|-------------|-------------|----------------|-------------|-----------------|---------------------|-----------------------|----------------|-------------------------|-----------------------|--------------------------|------------|-----------------| 
+| global      | True        | False       | 10.1.255.254   | True        | /stacki/network | False               | False                 | True           | install/kubernetes/pods | True                  | False                    | True       | True            | 
+| backend-0-0 |             | True        |                |             |                 | True                | True                  |                |                         |                       |                          |            |                 | 
+| backend-0-1 |             |             |                |             |                 | True                |                       |                |                         |                       |                          |            |                 | 
+| backend-0-2 |             |             |                |             |                 | True                |                       |                |                         |                       |                          |            |                 | 
+| backend-0-3 |             |             |                |             |                 |                     |                       |                |                         |                       |                          |            |                 | 
+| backend-0-4 |             |             |                |             |                 |                     |                       |                |                         |                       |                          |            |                 | 
 
 
 The goal here is to edit this file so that it reflects your site and needs, not mine. Since there isn't currently a page to describe attributes and what they are used for, I will do so here.
+
+We'll go through each of these values and tell you why it exists, what it will do at the current default setting, and why you might want to change it. This will be valuable when you add backend hosts below and whant to change the role they play in the Docker set-up.
 
 Actually, I sum up, then I write the attributes documentation.
 
@@ -264,7 +280,7 @@ The next five lines are applicable to only the name of the node at the beginning
 To add the attributes you load the attrfile after you edit it:
 
 ```
-# stack load attrfile file=kubernetes.csv
+# stack load attrfile file=full-kubernets-attrs.csv
 ```
 
 You can also add/set attributes on the command line. The above file would look like this if we did it on the command line instead:
@@ -311,6 +327,14 @@ Booleans are cool because true/false/yes/no/y/n/1/0 all work and they can be cap
 So let's explicate:
 
 ```
+Target = kube.secure
+Global Value = True
+Used for: Running kubernetes/docker with TLS/SSL termination.
+Host change: No, don't do that.
+```
+Leave this alone. You really want this to run securely.
+
+```
 Target = kube.master
 Global Value = False
 Used for: setting which node is the Kubernetes master. You need one.
@@ -350,7 +374,7 @@ Global Value = False
 Used for: Setting up etcd service
 Host change: backend-0-0, 0-1, and 0-2. Set to True for these three nodes.
 ```
-Etcd requires either that you have one etcd master with a storage backing store or 3, 5, or 7 etcd nodes in cluster. In this case, three nodes are designated to provide etcd redundancy. You can get away with one but we don't have a backing store in Phase 1. Phase 2 probably.
+Etcd requires either that you have one etcd master with a storage backing store or 3, 5, or 7 etcd nodes in cluster. In this case, three nodes are designated to provide etcd redundancy. You can get away with one but we don't have a backing store in Phase 2. Phase 3 probably.
 
 ```
 Target = kube.enable_dashboard
@@ -359,7 +383,7 @@ Used for: Setting up the kubernetes-dashboard automatically
 Host change: backend-0-0 is set to True.
 ```
 
-The kubernetes-dashboard is a UI for deployment of containers, services, pods etc. It's pretty. It's helpful especially if you're new to this. But I think it's beta? Setting a node to True will put the kubernetes-dashboard automatically. You'll have to start it up. (See below.) I've put it on the master. Technically you can put it on any node, but I haven't tested that yet - Phase 2 is around the corner.
+The kubernetes-dashboard is a UI for deployment of containers, services, pods etc. It's pretty. It's helpful especially if you're new to this. But I think it's beta? Setting a node to True will put the kubernetes-dashboard automatically. You'll have to start it up. (See below.) I've put it on the master. Technically you can put it on any node, but I haven't tested that yet.
 
 ```
 Target = kube.pull_pods
@@ -368,7 +392,7 @@ Used for: pulling yaml files from the frontend for stuff you already have.
 Host change: None - is a global set to "False" if you have no pods and aren't using the kubernetes-dashboard.
 ```
 
-This is a pallet thing, not Kubernetes. I wanted to test both the dashboard and other pods and services I have without having to copy them to the node after every install. Since a Stacki frontend has a web server running for the backend node installation that's available at /var/www/html/install/ I put yaml in a directory and pull it during install.
+This is a pallet thing, not Kubernetes. I wanted to test both the dashboard and other pods and services I have without having to copy them to the node after every install. Since a Stacki frontend has a web server running for the backend node installation that's available at /var/www/html/install/ I put yaml in a directory and pull it during install. The directory is /export/stack/kubernetes/pods. So if you have stuff you want to run and don't want to have to pass around you yaml files with ssh, drop them in that directory.
 
 ```
 Target = kube.pod_dir
@@ -386,7 +410,7 @@ Used for: Setting up a docker registry on a closed cluster.
 Host change: Global, either true or false
 ```
 
-Oh this is a can of worms, and I don't like how I did it so it will be changing in Phase 2. If you have a completely closed cluster, meaning, backend nodes don't have an internet connection, then set this to True. We'll discuss the issues further below in the Docker section below.
+Oh this is a can of worms, and I don't like how I did it so it will be changing. If you have a completely closed cluster, meaning, backend nodes don't have an internet connection, then set this to True. We'll discuss the issues further below in the Docker section below.
 
 ```
 Target = docker.registry.external
@@ -394,17 +418,7 @@ Global Value = True
 Used for: everything that needs web connectivity
 Host change: Global - change only if you have an off-line cluster.
 ```
-If the frontend or all the backend nodes do have connectivty to the internet, then set this to True.
-
-```
-Target = docker.overlay_disk
-Global Value = sdb
-Used for:
-Host change:
-```
-Worms, lots more worms. The overlayfs recommended by Docker is only in preview for CentOS 7.2 and 7.3, which is their way of saying: "It could work," and shrugging their shoulders. To work on XFS (our default), the filesystem needs to be created with "ftype=1" There are a couple of reasons this is problematic in Stacki 3.2 and CentOS 7.x using parted. Some of it is our fault, part of it not. There is a workaround, however. Define a disk by itself that will get the proper xfs ftype=1. Just name the disk, we do the rest. It defaults to sdb. If you have an SSD, use that because that's what's recommended.
-
-I plan on fixing this soon, but it may require a point release to get that done. 
+If the frontend or all the backend nodes do have connectivty to the internet, then set this to True. Actually, you have to, either all the nodes do or you have to masquerade below. See the Firwall section.
 
 ```
 Target = sync.hosts
@@ -412,21 +426,38 @@ Global Value = True
 Used for: syncing /etc/hosts to all backend nodes
 Host change:
 ```
-I do this because things just work better. 
+I do this because things just work better if /etc/hosts is populated on all the backend nodes because your DNS infrastructure sucks. (Mine does.)
+
+```
+Target = kube.spark_demo
+Global Value = True
+Used for: Starting up Spark in a K8s cluster.
+Host change: Global - set to false if you don't want it.
+```
+
+I do this because I do demos, lots and lots of demos. Set it to false. It's pretty though.
+
+There is one other attribute you have to set by hand, because adding it in spreadsheet doesn't work. I believe this is fixed in stacki 4.0 however. Kubernetes needs a network for containers to live in/on and we want to define that:
+
+```
+stack set attr attr=kube.network value='{ "Network": "172.16.0.0/16", "SubnetLen": 24, "SubnetMin": "172.16.1.0", "SubnetMax": "172.16.254.0", "Backend": { "Type": "udp", "Port": 7890 } }'
+```
+
+Feel free to change the ip schema before you run that command. 
 
 ##### Docker - we have to talk
 
-The Docker registry (yeah, and Kubernetes) run insecurely in Phase 1. It won't in Phase 2.
+The Docker registry runs insecurely in Phase
 
 Okay, with Docker there are two options: if no nodes don't have internet access, or if at least the frontend has internet access.
 
-######### Cluster is private
+###### Cluster is private
 
 If there are no nodes with internet access, set the docker.registry.local to True. This will create a registry on the master node. You can push docker images to this directory with "docker push master_ip:5000/imagename" and it will work.
 
-To get the kubernetes-dashboard up on a closed network, several docker images have been pre-created and installed on the master node, so that will at least work. But any other images that need to be pulled for your pods, also need to be pushed to the private registry. Including ones you may have in a site registry. This will change in Phase 2.
+To get the kubernetes-dashboard up on a closed network, several docker images have been pre-created and installed on the master node, so that will at least work. But any other images that need to be pulled for your pods, also need to be pushed to the private registry. Including ones you may have in a site registry. This will change in Phase 3.
 
-######### Cluster has one public interface.
+###### Cluster has one public interface.
 
 I'm assuming if you have a public interface it's on the frontend. If all the backends are public facing, just set the docker.registry.external to "True" and be on your way.
 
@@ -458,7 +489,7 @@ You should be able to ping google.com from any backend node. If not, get on the 
 Now that you've set up your attrfile, load it:
 
 ```
-# stack load attrfile file=kubernetes-attrs.csv
+# stack load attrfile file=full-kubernetes-attrs.csv
 
 ```
 
@@ -473,6 +504,10 @@ Reboot your nodes. Wait.
 ```
 
 * Access
+
+Yeah access on bare metal is funky because there's no automatic loadbalancer that multiplexes the pods to the external world. AWS and GCE both do this but that's because they way their hands and invoke incantations. It's magic and they don't care if you think that. There are a couple of ways to get to the dashboard
+
+- Path 1
 ```
 # ssh <master node>
 
@@ -501,7 +536,7 @@ From your control machine ssh port forward to the dashboard node.
 
 If you have access from a desktop or laptop to the Manager node, you could also do this:
 
-Install kubectl on your laptop/desktop:
+Install [kubectl](https://kubernetes.io/docs/tasks/kubectl/install) on your laptop/desktop:
 
 ```
 # kubectl -n kube-system get pods --server=http://10.1.255.254:8080
@@ -515,17 +550,104 @@ kubectl -n kube-system port-forward kubernetes-dashboard-1728291479-q1sjp --serv
 
 Go to http://127.0.0.1:9090 in a browser.
 
+- Path 2
+
+This is a bit hacky, but it works, expecially when I'm demoing.
+
+On my desktop/laptop that has access to the network the K8s cluster is running on, and that has [kubectl](https://kubernetes.io/docs/tasks/kubectl/install/) on it.
+
+```
+# mkdir .kube
+# cd .kube
+
+Copy the certs and keys:
+
+# scp root@frontendIP:/opt/kubernetes/etc/certs.d/*.pem .
+```
+
+Then create a config file. Go ahead and copy this and make edits to the server URL and the directory path. I doubt you're in /Users/joekaiser/.kube when you do this.
+
+```
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority: /Users/joekaiser/.kube/ca.pem
+    server: https://10.1.255.254:6443
+  name: kubernetes
+- cluster:
+    certificate-authority: /Users/joekaiser/.kube/ca.pem
+    server: https://10.1.255.254:6443
+  name: local
+contexts:
+- context:
+    cluster: local
+    user: kubelet
+  name: kubelet-context
+- context:
+    cluster: local
+    user: kube-proxy
+  name: kubeproxy-context
+current-context: kubelet-context
+kind: Config
+preferences: {}
+users:
+- name: kube-proxy
+  user:
+    client-certificate: /Users/joekaiser/.kube/kube-proxy-client.pem
+    client-key: /Users/joekaiser/.kube/kube-proxy-client-key.pem
+- name: kubelet
+  user:
+    client-certificate: /Users/joekaiser/.kube/kubelet-client.pem
+    client-key: /Users/joekaiser/.kube/kubelet-client-key.pem
+```
+
+Now get really hacky, This is a script I use to get to the dashboard and spark web UIs.
+
+```
+#!/bin/bash
+SVC=${1}
+PORT=${2}
+
+if [ "${1}" = "kubernetes-dashboard" ]; then
+    NSPACE="kube-system"
+    SELECTOR="app"
+else
+    NSPACE="default"
+    SELECTOR="component"
+fi
+
+POD=`kubectl -n ${NSPACE} get po --selector=${SELECTOR}=${SVC} -o name | awk -F'/' '{print $2}'`
+CPORT=`kubectl -n ${NSPACE} get po ${POD} --template='{{(index (index .spec.containers 0).ports 0).containerPort}}{{"\n"}}'`
+kubectl -n ${NSPACE} port-forward ${POD} ${PORT}:${CPORT} &
+```
+
+This basically port forwards my locahost to the container managed by Kubernetes and make the port available at 127.0.0.1:PORT.
+
+And I use it like this:
+```
+For the dashboard:
+./k8shack kubernetes-dashboard 7777
+
+For Spark demo UI:
+./k8shack spark-ui-proxy 8888
+
+For Zeppelin workbook UI
+./k8shack zeppelin 9999
+```
+
+##### Monitoring
+
+I've created a stacki-prometheus pallet that runs Prometheus/Grafana on the frontend with some default dashboards for bare metal, Kubernetes, and Docker. Follow the [stacki-prometheus README.md](https://github.com/StackIQ/stacki-prometheus) to add monitoring to your kubernetes infrastructure. 
 
 ##### Proposed changes in no particular order
 * You oughta be able to install with CoreOS too.
-* Docker fully separated from Kubernetes pallet. They can depend on each other, but stacki-docker right now only carries RPMs and no configuration.
-* Use TLS in Docker and Kubernetes
 * Rkt
-* Fix stacki to use quoted options for partitioning - fixes overlayfs problems.
-* Docker to support site registry.
+* Docker to support external,site, and cluster local registries.
 * Run just an etcd cluster?
 * Storage backed etcd. 
+* Persistent fileystem options for stateful sets.
 * System Kubernetes daemons to use kubecfg versus /etc/sysconfig files. 
+* kube-dns really working
 
 ##### Fixing stuff that's done broke
 
@@ -543,6 +665,8 @@ Get on googlegroups or the Stacki Slack channel and tell us what you need. You h
 
 <sup name="f5">[5](#a5)</sup> If you've seen any of the Kubernetes documentation, there are multiple ways to skin this particular software cat. We aren't doing those. If you want, you can just use Stacki to get the machines to a ping and a prompt and then use another/other tools for deploying Kubernetes. But then, you're not running it on bare metal anymore if that's a priority for you.
 
-<sup name="f6">[6](#a6)</sup> vim or swim! I guess you could use emacs, but that means you're probably a developer and why are you reading this? 
+<sup name="a6">[6](#f6)</sup> There should a link here about attributes and how to use them. Apparently, no one has ever written this. I will do so, next week. Really. Next. Week.
 
-<sup name="a7">[7](#f7)</sup> There should a link here about attributes and how to use them. Apparently, no one has ever written this. I will do so, next week. Really. Next. Week.
+<sup name="f7">[7](#a7)</sup> vim or swim! I guess you could use emacs, but that means you're probably a developer and why are you reading this? 
+
+
