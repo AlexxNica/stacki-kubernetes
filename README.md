@@ -628,6 +628,10 @@ For Zeppelin workbook UI
 ./k8shack zeppelin 9999
 ```
 
+##### Monitoring
+
+I've created a stacki-prometheus pallet that runs Prometheus/Grafana on the frontend with some default dashboards for bare metal, Kubernetes, and Docker. Follow the [stacki-prometheus README.md](https://github.com/StackIQ/stacki-prometheus) to add monitoring to your kubernetes infrastructure. 
+
 ##### Proposed changes in no particular order
 * You oughta be able to install with CoreOS too.
 * Rkt
