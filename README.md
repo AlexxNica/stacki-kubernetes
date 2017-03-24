@@ -95,7 +95,7 @@ and drink the first couple of cups. <sup name="a3">[3](#f3)</sup>
 
 The stacki-kubernetes pallet installed on top of Stacki, will give you a functioning Kubernetes cluster with a kubernetes-dashboard deployment if you request it. 
 
-This is a Phase 2 project. A Phase 2 project for us means: it's going to work as advertised in the Kubernetes docs only on bare metal, and all the kube daemons are now secure. As in wrapped with SSL/TLS<sup name="a4">[4](#f4)</sup>. You'll be able to install backend nodes with the current stable version of Kubernetes and run your, or public, containers. 
+This is a Phase 2 project. A Phase 2 project for us means: it's going to work as advertised in the Kubernetes docs only on bare metal, and all the kube daemons are now secure. As in wrapped with SSL/TLS<sup name="a4">[4](#f4)</sup>. You'll be able to install backend nodes with the current stable version of Kubernetes and run your own or public containers. 
 
 ### Requirements
 
