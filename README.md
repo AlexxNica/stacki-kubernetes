@@ -238,16 +238,14 @@ Open it with your favorite editor <sup name="a7">[7](#f7)</sup>, Excel/Libre Off
 
 It looks like this:
 
-| target      | kube.master | kube.master_ip | kube.minion | etcd.prefix     | etcd.cluster_member | kube.enable_dashboard | kube.pull_pods | kube.pod_dir            | docker.registry.local | docker.registry.external | docker.overlay_disk | sync.hosts | kube.spark_demo | 
-|-------------|-------------|----------------|-------------|-----------------|---------------------|-----------------------|----------------|-------------------------|-----------------------|--------------------------|---------------------|------------|-----------------| 
-| global      | False       | 10.1.255.254   | True        | /stacki/network | False               | False                 | True           | install/kubernetes/pods | True                  | False                    | sdb                 | True       | True            | 
-| backend-0-0 | True        |                |             |                 | True                | True                  |                |                         |                       |                          |                     |            |                 | 
-| backend-0-1 |             |                |             |                 | True                |                       |                |                         |                       |                          |                     |            |                 | 
-| backend-0-2 |             |                |             |                 | True                |                       |                |                         |                       |                          |                     |            |                 | 
-| backend-0-3 |             |                |             |                 |                     |                       |                |                         |                       |                          |                     |            |                 | 
-| backend-0-4 |             |                |             |                 |                     |                       |                |                         |                       |                          |                     |            |                 | 
-
-
+| target      | kube.secure | kube.master | kube.master_ip | kube.minion | etcd.prefix     | etcd.cluster_member | kube.enable_dashboard | kube.pull_pods | kube.pod_dir            | docker.registry.local | docker.registry.external | sync.hosts | kube.spark_demo | 
+|-------------|-------------|-------------|----------------|-------------|-----------------|---------------------|-----------------------|----------------|-------------------------|-----------------------|--------------------------|------------|-----------------| 
+| global      | True        | False       | 10.1.255.254   | True        | /stacki/network | False               | False                 | True           | install/kubernetes/pods | True                  | False                    | True       | True            | 
+| backend-0-0 |             | True        |                |             |                 | True                | True                  |                |                         |                       |                          |            |                 | 
+| backend-0-1 |             |             |                |             |                 | True                |                       |                |                         |                       |                          |            |                 | 
+| backend-0-2 |             |             |                |             |                 | True                |                       |                |                         |                       |                          |            |                 | 
+| backend-0-3 |             |             |                |             |                 |                     |                       |                |                         |                       |                          |            |                 | 
+| backend-0-4 |             |             |                |             |                 |                     |                       |                |                         |                       |                          |            |                 | 
 
 
 The goal here is to edit this file so that it reflects your site and needs, not mine. Since there isn't currently a page to describe attributes and what they are used for, I will do so here.
