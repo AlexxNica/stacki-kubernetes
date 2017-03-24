@@ -437,6 +437,14 @@ Host change: Global - set to false if you don't want it.
 
 I do this because I do demos, lots and lots of demos. Set it to false. It's pretty though.
 
+There is one other attribute you have to set by hand, because adding it in spreadsheet doesn't work. I believe this is fixed in stacki 4.0 however. Kubernetes needs a network for containers to live in/on and we want to define that:
+
+```
+stack set attr attr=kube.network value='{ "Network": "172.16.0.0/16", "SubnetLen": 24, "SubnetMin": "172.16.1.0", "SubnetMax": "172.16.254.0", "Backend": { "Type": "udp", "Port": 7890 } }'
+```
+
+Feel free to change the ip schema before you run that command. 
+
 ##### Docker - we have to talk
 
 The Docker registry runs insecurely in Phase
