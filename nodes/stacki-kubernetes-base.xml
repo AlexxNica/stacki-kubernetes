@@ -323,7 +323,7 @@ RestartSec=10
 <boot order="post">
 /opt/kubernetes/bin/etcdctl mkdir &etcd.prefix;
 
-NETWORK='{ "Network": "10.1.0.0/16", "SubnetLen": 24, "SubnetMin": "10.1.10.0", "SubnetMax": "10.1.30.0", "Backend": { "Type": "udp", "Port": 7890 } }'
+NETWORK=&kube.net;
 
 echo ${NETWORK} | /opt/kubernetes/bin/etcdctl set &etcd.prefix;/config
 

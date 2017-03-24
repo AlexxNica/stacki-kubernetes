@@ -13,6 +13,7 @@
 	</si_copyright>
 
 <package>cfssl</package>
+
 <post>
 stack set attr attr=sync.hosts value=True
 mkdir -p /var/www/html/install/kubernetes/pods
@@ -140,6 +141,7 @@ spec:
   ports:
   - port: 80
     targetPort: 9090
+    nodePort: 31800
   selector:
     app: kubernetes-dashboard
 </file>
@@ -221,6 +223,7 @@ spec:
   ports:
   - port: 80
     targetPort: 9090
+    nodePort: 31800
   selector:
     app: kubernetes-dashboard
 </file>

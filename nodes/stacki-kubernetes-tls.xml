@@ -288,14 +288,14 @@ cfssl gencert \
 -ca-key=ca-key.pem \
 -config=ca-config.json \
 -profile=server \
-docker-server-csr.json | cfssljson -bare docker-server
+docker-server-csr.json | cfssljson -bare docker-server &gt;&gt; /root/cert.log 2&gt;&amp;1
 
 cfssl gencert \
 -ca=ca.pem \
 -ca-key=ca-key.pem \
 -config=ca-config.json \
 -profile=client \
-docker-client-csr.json | cfssljson -bare docker-client
+docker-client-csr.json | cfssljson -bare docker-client &gt;&gt; /root/cert.log 2&gt;&amp;1
 
 <!-- kubernetes -->
 
@@ -304,41 +304,41 @@ cfssl gencert \
 -ca-key=ca-key.pem \
 -config=ca-config.json \
 -profile=server \
-kube-apiserver-server-csr.json | cfssljson -bare kube-apiserver-server
+kube-apiserver-server-csr.json | cfssljson -bare kube-apiserver-server &gt;&gt; /root/cert.log 2&gt;&amp;1
 
 cfssl gencert \
 -ca=ca.pem \
 -ca-key=ca-key.pem \
 -config=ca-config.json \
 -profile=client \
-kubelet-client-csr.json | cfssljson -bare kubelet-client
+kubelet-client-csr.json | cfssljson -bare kubelet-client &gt;&gt; /root/cert.log 2&gt;&amp;1
 
 cfssl gencert \
 -ca=ca.pem \
 -ca-key=ca-key.pem \
 -config=ca-config.json \
 -profile=client \
-kube-proxy-client-csr.json | cfssljson -bare kube-proxy-client
+kube-proxy-client-csr.json | cfssljson -bare kube-proxy-client &gt;&gt; /root/cert.log 2&gt;&amp;1
 
 cfssl gencert \
 -ca=ca.pem \
 -ca-key=ca-key.pem \
 -config=ca-config.json \
 -profile=client \
-kubernetes-admin-user.csr.json | cfssljson -bare kubernetes-admin-user
+kubernetes-admin-user.csr.json | cfssljson -bare kubernetes-admin-user &gt;&gt; /root/cert.log 2&gt;&amp;1
 
 <!-- peers -->
 cfssl gencert \
 -ca=ca.pem \
 -ca-key=ca-key.pem \
 -config=ca-config.json \
--profile=peer etcd-member.json | cfssljson -bare etcd-member
+-profile=peer etcd-member.json | cfssljson -bare etcd-member &gt;&gt; /root/cert.log 2&gt;&amp;1
 
 cfssl gencert \
 -ca=ca.pem \
 -ca-key=ca-key.pem \
 -config=ca-config.json \
--profile=server etcd-server.json | cfssljson -bare etcd-server
+-profile=server etcd-server.json | cfssljson -bare etcd-server &gt;&gt; /root/cert.log 2&gt;&amp;1
 
 chmod 0444 *.pem
 chmod 0400 *key.pem
@@ -347,16 +347,16 @@ chown etcd:etcd etcd-*.pem
 </post>
 <post>
 mkdir /root/.docker
-mv -f /opt/kubernetes/pki/docker-client-key.pem /root/.docker/key.pem
-mv -f /opt/kubernetes/pki/docker-client.pem /root/.docker/cert.pem
-mv -f /opt/kubernetes/pki/docker-server-key.pem /etc/docker/certs.d/server-key.pem
-mv -f /opt/kubernetes/pki/docker-server.pem /etc/docker/certs.d/server-cert.pem
-rm -f /etc/docker/certs.d/ca.pem
-cp /opt/kubernetes/pki/ca.pem /etc/docker/certs.d/
-cp /opt/kubernetes/pki/ca.pem /root/.docker
-mkdir /opt/kubernetes/etc/certs.d
-mv /opt/kubernetes/pki/*.pem /opt/kubernetes/etc/certs.d/
-cd /opt/kubernetes/pki
-rm -f docker-* kube* ca*
+mv -f /opt/kubernetes/pki/docker-client-key.pem /root/.docker/key.pem &gt;&gt; /root/cert.log 2&gt;&amp;1
+mv -f /opt/kubernetes/pki/docker-client.pem /root/.docker/cert.pem &gt;&gt; /root/cert.log 2&gt;&amp;1
+mv -f /opt/kubernetes/pki/docker-server-key.pem /etc/docker/certs.d/server-key.pem &gt;&gt; /root/cert.log 2&gt;&amp;1
+mv -f /opt/kubernetes/pki/docker-server.pem /etc/docker/certs.d/server-cert.pem &gt;&gt; /root/cert.log 2&gt;&amp;1
+rm -f /etc/docker/certs.d/ca.pem &gt;&gt; /root/cert.log 2&gt;&amp;1
+cp /opt/kubernetes/pki/ca.pem /etc/docker/certs.d/ &gt;&gt; /root/cert.log 2&gt;&amp;1
+cp /opt/kubernetes/pki/ca.pem /root/.docker &gt;&gt; /root/cert.log 2&gt;&amp;1
+mkdir /opt/kubernetes/etc/certs.d &gt;&gt; /root/cert.log 2&gt;&amp;1
+mv /opt/kubernetes/pki/*.pem /opt/kubernetes/etc/certs.d/ &gt;&gt; /root/cert.log 2&gt;&amp;1
+cd /opt/kubernetes/pki &gt;&gt; /root/cert.log 2&gt;&amp;1
+# rm -f docker-* kube* ca* &gt;&gt; /root/cert.log 2&gt;&amp;1
 </post>
 </kickstart>

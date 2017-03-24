@@ -130,7 +130,7 @@ quota-backend-bytes: 0
 listen-peer-urls: https://&hostaddr;:2380
 
 # List of comma separated URLs to listen on for client traffic.
-listen-client-urls: https://&hostaddr;:2379
+listen-client-urls: https://&hostaddr;:2379,http://127.0.0.1:4001
 
 # Maximum number of snapshot files to retain (0 is unlimited).
 max-snapshots: 5
@@ -317,7 +317,7 @@ mkdir -p /etc/systemd/system/docker.service.d
 systemctl enable docker
 </post>
 
-<post cond="&docker.registry.local;"> 
+<post cond="docker.registry.local"> 
 <file name="/etc/systemd/system/docker.service.d/override.conf">
 [Service]
 EnvironmentFile=-/etc/sysconfig/docker-network
@@ -334,7 +334,7 @@ RestartSec=10
 </file>
 </post>
 
-<post cond="&docker.registry.external;"> 
+<post cond="docker.registry.external"> 
 <file name="/etc/systemd/system/docker.service.d/override.conf">
 [Service]
 EnvironmentFile=-/etc/sysconfig/docker-network

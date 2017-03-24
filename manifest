@@ -6,4 +6,4 @@ kubernetes-server
 kubernetes-images
 roll-stacki-kubernetes-kickstart
 cfssl
-easyrsa
+stacki-kubernetes-spreadsheets
