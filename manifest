@@ -4,6 +4,5 @@ kubernetes-client
 kubernetes-extras
 kubernetes-server
 kubernetes-images
-roll-stacki-kubernetes-kickstart
 cfssl
 stacki-kubernetes-spreadsheets
