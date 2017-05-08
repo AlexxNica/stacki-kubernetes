@@ -44,7 +44,6 @@ TGZ 		= tar.gz
 ROLLROOT	= ../../
 TGZNAME		= kubernetes.$(TGZ)
 URL		= https://dl.k8s.io/v$(VERSION)/
-RPM.ARCH	= noarch
 
 include $(STACKBUILD)/etc/CCRules.mk
 
@@ -53,10 +52,12 @@ refresh:
 	wget --no-check-certificate -O $(TGZNAME) $(URL)$(TGZNAME)
 
 build::
+	echo "Adding manifests"
 
 install::
 	mkdir -p $(ROOT)$(PKGROOT)/manifests
-	tar --strip-components=1 -xf $(TGZNAME) -C $(ROOT)/$(PKGROOT)
-	tar --strip-component=1 -xf $(ROOT)$(PKGROOT)/server/kubernetes-manifests.tar.gz -C $(ROOT)$(PKGROOT)/manifests
-	tar --strip-component=1 -xf $(ROOT)$(PKGROOT)/server/kubernetes-salt.tar.gz -C $(ROOT)$(PKGROOT)
-	rm -fr $(ROOT)$(PKGROOT)/server
+	tar --strip-components=1 -xf $(TGZNAME)
+	tar --strip-component=1 -xf ./server/kubernetes-manifests.tar.gz -C $(ROOT)$(PKGROOT)/manifests
+	tar --strip-component=1 -xf ./server/kubernetes-salt.tar.gz -C $(ROOT)$(PKGROOT)
+	rm -f cluster/gce/cos
+	cp -a * $(ROOT)$(PKGROOT)

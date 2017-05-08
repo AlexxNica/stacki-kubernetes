@@ -24,11 +24,11 @@ refresh::
 	wget --no-check-certificate -O $(TGZNAME) $(URL)$(VERS)/$(TGZNAME)
 
 build::
-	tar -xf $(TGZNAME)
 
 install::
 	mkdir -p $(ROOT)$(PKGROOT)
 	mkdir -p $(ROOT)$(SHAREDOCDIR)
+	tar -xf $(TGZNAME)
 	
 	$(INSTALL) -m0755 $(TARDIR)/etcd $(ROOT)$(PKGROOT)
 	$(INSTALL) -m0755 $(TARDIR)/etcdctl $(ROOT)$(PKGROOT)

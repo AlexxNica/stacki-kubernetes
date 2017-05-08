@@ -163,7 +163,7 @@ Environment=KUBE_EXTRA_OPTS=--register-schedulable=False
 <file name="/etc/systemd/system/kube-apiserver.service.d/kube-apiserver.conf">
 [Service]
 # Client Env Vars
-Environment=KUBE_BIND_ADDRESS=--address=10.1.255.254
+Environment=KUBE_BIND_ADDRESS=--address=&kube.master_ip;
 Environment=KUBE_SERVICE_CLUSTER_IP_RANGE=--service-cluster-ip-range=10.254.0.0/16
 Environment=KUBE_ADMISSION_CONTROL=--admission_control=NamespaceLifecycle,NamespaceExists,LimitRanger,SecurityContextDeny,ResourceQuota
 Environment=KUBE_CLIENT_CAFILE=--client-ca-file=/opt/kubernetes/etc/certs.d/ca.pem
@@ -177,17 +177,16 @@ Environment=KUBE_ETCD_KEYFILE=--etcd-keyfile=/opt/kubernetes/etc/certs.d/etcd-me
 import stack.api as api
 import stack.commands as cmd
 
-actions = api.Call('report.host.attr',
-		['attr=etcd.cluster_member', 'pydict=True'])
-
+actions = api.Call('list.host.attr',
+                ['attr=etcd.cluster_member', 'pydict=True'])
 urls = []
 for a in actions:
-	node = a.split(':')[-0].strip()
-	val = a.split(':')[-1].strip()
-	if cmd.str2bool(val) == True:
-		ip = api.Call('report.host.attr',[node,'attr=hostaddr'])
-		url = 'https://%s:2379' % (ip[0])
-		urls.append(url)
+        if cmd.str2bool(a['value']) == True:
+                node = a['host']
+                ip = api.Call('list.host.attr',[node,'attr=hostaddr'])
+
+                url = 'https://%s:2379' % ip[0]['value']
+                urls.append(url)
 
 print 'Environment=KUBE_ETCD_SERVERS=--etcd_servers=%s' % ','.join(urls[:])
 </eval></file>

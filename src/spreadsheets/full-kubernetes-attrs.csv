@@ -1,7 +1,0 @@
-target,kube.secure,kube.master,kube.master_ip,kube.minion,etcd.prefix,etcd.cluster_member,kube.enable_dashboard,kube.pull_pods,kube.pod_dir,docker.registry.local,docker.registry.external,sync.hosts,kube.spark_demo
-global,True,False,10.1.255.254,True,/stacki/network,False,False,True,install/kubernetes/pods,True,False,True,True
-backend-0-0,,True,,,,True,True,,,,,,
-backend-0-1,,,,,,True,,,,,,,
-backend-0-2,,,,,,True,,,,,,,
-backend-0-3,,,,,,,,,,,,,
-backend-0-4,,,,,,,,,,,,,

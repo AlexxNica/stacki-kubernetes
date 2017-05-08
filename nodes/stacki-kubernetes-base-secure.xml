@@ -7,7 +7,7 @@ Kubernetes pallet backend base
 
 <package disable="1">iwl*</package>
 <package disable="1">ivtv*</package>
-<package meta="1">@coare</package>
+<package meta="1">@core</package>
 <package>lsof</package>
 <package>wget</package>
 <package>bind-utils</package>
@@ -151,16 +151,15 @@ discovery-srv:
 import stack.api as api
 import stack.commands as cmd
 
-actions = api.Call('report.host.attr',
-		['attr=etcd.cluster_member', 'pydict=True'])
-
+actions = api.Call('list.host.attr',
+                ['attr=etcd.cluster_member', 'pydict=True'])
 nodes = []
 for a in actions:
-	node = a.split(':')[-0].strip()
-	val = a.split(':')[-1].strip()
-	if cmd.str2bool(val) == True:
-		ip = api.Call('report.host.attr',[node,'attr=hostaddr'])
-		url = '%s.&domainname;=https://%s:2380' % (node,ip[0])
+       	if cmd.str2bool(a['value']) == True:
+		node = a['host']	 
+		ip = api.Call('list.host.attr',[node,'attr=hostaddr'])
+		
+		url = '%s.&domainname;=https://%s:2380' % (node,ip[0]['value'])
 		nodes.append(url)
 print 'initial-cluster:', ','.join(nodes[:])
 </eval>
@@ -255,17 +254,16 @@ FLANNEL_ETCD_KEYFILE="--etcd-certfile=/opt/kubernetes/etc/certs.d/etcd-member.pe
 import stack.api as api
 import stack.commands as cmd
 
-actions = api.Call('report.host.attr',
-		['attr=etcd.cluster_member', 'pydict=True'])
-
+actions = api.Call('list.host.attr',
+                ['attr=etcd.cluster_member', 'pydict=True'])
 urls = []
 for a in actions:
-	node = a.split(':')[-0].strip()
-	val = a.split(':')[-1].strip()
-	if cmd.str2bool(val) == True:
-		ip = api.Call('report.host.attr',[node,'attr=hostaddr'])
-		url = 'https://%s:2379' % (ip[0])
-		urls.append(url)
+        if cmd.str2bool(a['value']) == True:
+                node = a['host']
+                ip = api.Call('list.host.attr',[node,'attr=hostaddr'])
+
+                url = 'https://%s:2379' % ip[0]['value']
+                urls.append(url)
 
 print 'FLANNEL_ETCD_ENDPOINTS="--etcd-endpoints=%s"' % ','.join(urls[:])
 </eval></file>
@@ -343,7 +341,7 @@ RestartSec=10
 /opt/kubernetes/bin/etcdctl \
     --cert-file=/opt/kubernetes/etc/certs.d/etcd-member.pem \
     --key-file=/opt/kubernetes/etc/certs.d/etcd-member-key.pem \
-    --endpoints=https://10.1.255.254:2379 \
+    --endpoints=https://&kube.master_ip;:2379 \
     --ca-file=/opt/kubernetes/etc/certs.d/ca.pem \
     mkdir /stacki/network
 
@@ -352,7 +350,7 @@ NETWORK='&kube.network;'
 echo ${NETWORK} | /opt/kubernetes/bin/etcdctl \
     --cert-file=/opt/kubernetes/etc/certs.d/etcd-member.pem \
     --key-file=/opt/kubernetes/etc/certs.d/etcd-member-key.pem \
-    --endpoints=https://10.1.255.254:2379 \
+    --endpoints=https://&kube.master_ip;:2379 \
     --ca-file=/opt/kubernetes/etc/certs.d/ca.pem \
 set /stacki/network/config
 

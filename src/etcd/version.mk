@@ -1,2 +1,2 @@
 NAME=etcd
-VERSION=v3.1.3
+VERSION=v3.1.7
