@@ -229,5 +229,8 @@ spec:
     app: kubernetes-dashboard
 </file>
 </post>
+<post>
+stack set attr attr=kube.network value='{ "Network": "172.16.0.0/16", "SubnetLen": 24, "SubnetMin": "172.16.1.0", "SubnetMax": "172.16.254.0", "Backend": { "Type": "udp", "Port": 7890 } }'
+</post>
 
 </kickstart>
