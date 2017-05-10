@@ -1,5 +1,7 @@
 
-# Stacki+Kubernetes Cluster Install - Phase 2
+# Stacki+Kubernetes Cluster Install - Phase 2 
+
+***This is for Stacki 4.0. If you want Phase 2 Kubernetes for Stacki 3.2, go to the phase2_3.2 tag on github for correct documentation and links***
 
 This is the documentation for phase2 of the stacki-kubernetes. It locks all systemd kubernetes services with SSL/TLS termination, for both clients and servers. You're welcome.
 
@@ -17,9 +19,9 @@ We assume you have:
 * Download these to your frontend
     - [CentOS-7.3](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-7-x86_64-Everything-1611.iso)
     - [CentOS-7.3 Updates](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-Updates-7.3-7.x.x86_64.disk1.iso)
-    - [stacki-docker-17-03 phase2](https://s3.amazonaws.com/stacki/public/pallets/3.2/open-source/stacki-docker-17.03.0-3.2_phase2.x86_64.disk1.iso)
-    - [stacki-kubernetes](http://stacki.s3.amazonaws.com/public/pallets/3.2/open-source/stacki-kubernetes-1.5.4-7.x_p2.x86_64.disk1.iso)
-
+    - [stacki-docker-17-03 phase2](https://s3.amazonaws.com/stacki/public/pallets/4.0/open-source/stacki-docker-17.03.1-7.x_phase2.x86_64.disk1.iso)
+    - [stacki-kubernetes](https://s3.amazonaws.com/stacki/public/pallets/4.0/open-source/stacki-kubernetes-1.6.2-7.x_phase2.x86_64.disk1.iso)
+    
 * Install, enable, and then run stacki-kubernetes:
 ```
 # stack add pallet stacki-*iso CentOS*.iso
@@ -31,21 +33,24 @@ We assume you have:
 
 * Prepare spreadsheet.
 ```
-# cd /export/stack/spreadsheets/examples/
+# cd /opt/stack/share/examples/spreadsheets/kubernetes
 ```
 
-Edit full-kubernetes-attrs.csv change the "backend-0-?" hostnames to your 
+Edit stacki-kubernetes-1.6.2-kubernetes-attrs.csv change the "backend-0-?" hostnames to your 
 hostnames. Edit any ip addresses for the master ip. This is easier opened 
 in Excel or Google Spreadsheet. Export it back csv on your frontend.
 
 If you have more hostnames than in this example, add them and assign them roles. 
-Mostly they'll be nodes.
+Mostly they'll be nodes and you just have to copy the lines with all the commas.
 
 Add it:
 ```
-# stack load attrfile file=full-kubernetes-attrs.csv
-
+# stack load attrfile file=stacki-kubernetes-1.6.2-kubernetes-attrs.csv
 ```
+
+* Monitoring
+
+If you don't have monitoring, you can use the stacki-prometheus pallet. I've created a stacki-prometheus pallet that runs Prometheus/Grafana on the frontend with some default dashboards for bare metal, Kubernetes, and Docker. Follow the [stacki-prometheus README.md](https://github.com/StackIQ/stacki-prometheus) to add monitoring to your kubernetes infrastructure. 
 
 * Install backend nodes.
 ```
@@ -93,7 +98,7 @@ and drink the first couple of cups. <sup name="a3">[3](#f3)</sup>
 
 ### Introduction
 
-The stacki-kubernetes pallet installed on top of Stacki, will give you a functioning Kubernetes cluster with a kubernetes-dashboard deployment if you request it. 
+The stacki-kubernetes pallet installed on top of Stacki, will give you a functioning Kubernetes cluster with a kubernetes-dashboard deployment if you request it, on bare metal. No kubernetes services run in containers, everything runs in systemd. If you want to get any closer to the metal, please see how to compile Kubernetes in Assembly. This is not that guide.
 
 This is a Phase 2 project. A Phase 2 project for us means: it's going to work as advertised in the Kubernetes docs only on bare metal, and all the kube daemons are now secure. As in wrapped with SSL/TLS<sup name="a4">[4](#f4)</sup>. You'll be able to install backend nodes with the current stable version of Kubernetes and run your own or public containers. 
 
@@ -101,30 +106,31 @@ This is a Phase 2 project. A Phase 2 project for us means: it's going to work as
 
 As in, you need these to make this work. If you don't have all of these, it won't work.
 
-- [stacki-os-3.2](https://s3.amazonaws.com/stacki/3.x/stacki-os-3.2-7.x.x86_64.disk1.iso) (If you already have a Stacki 3.2 frontend up, you don't need this again.)
+- [stackios-4.0](https://s3.amazonaws.com/stacki/public/pallets/4.0/open-source/stackios-4.0_c4aff2a-7.x.x86_64.disk1.iso)
 - [CentOS-7.3](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-7-x86_64-Everything-1611.iso)
 - [CentOS-7.3 Updates](https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-Updates-7.3-7.x.x86_64.disk1.iso)
-- [stacki-docker-17-03 phase2](https://s3.amazonaws.com/stacki/public/pallets/3.2/open-source/stacki-docker-17.03.0-3.2_phase2.x86_64.disk1.iso)
-- [stacki-kubernetes](http://stacki.s3.amazonaws.com/public/pallets/3.2/open-source/stacki-kubernetes-1.5.4-7.x_p2.x86_64.disk1.iso)
+- [stacki-docker-17-03.1 phase2](https://s3.amazonaws.com/stacki/public/pallets/4.0/open-source/stacki-docker-17.03.1-7.x_phase2.x86_64.disk1.iso)
+- [stacki-kubernetes](https://s3.amazonaws.com/stacki/public/pallets/4.0/open-source/stacki-kubernetes-1.6.2-7.x_phase2.x86_64.disk1.iso)
 
 You should download these. If you have a Stacki frontend up already, download these to /export which should be the biggest partition on the frontend.
 
 ### Versions (all latest stable)
-- Docker 17.03.0 Community Edition (It's in the stacki-docker pallet.)
-- Kubernetes 1.5.4
-- etcd 3.1.3
-- flannel 0.7.0
+- Docker 17.03.1 Community Edition (It's in the stacki-docker pallet.)
+- Kubernetes 1.6.2
+- etcd 3.1.7
+- flannel 0.7.1
 
-This is the current default stack. Docker 17.03.0 is in the stacki-docker pallet which is why you need it. Everything else for Kubernetes is in the stacki-kubernetes pallet. Phase 2 only uses these versions. Phase 3 will have more options. See the Caveats section for what you may need but this may not have.
+This is the current default stack. Docker 17.03.1 is in the stacki-docker pallet which is why you need it. Everything else for Kubernetes is in the stacki-kubernetes pallet. Phase 2 only uses these versions. Phase 3 will have more options. See the Caveats section for what you may need but this may not have.
 
 ### Caveats
 This is what it doesn't have - yet. If you have opinions on what should be in Phase 3, make it known on the googlegroups or on the Stacki Slack channel.
 
-- rkt (Really? Go away and leave me alone.)
+- rkt + CoreOS (Yup, with Stacki 4.0 I should be able to put this in natively. Google Infrastructure For Everybody!)
 - The only overlay network currently supported is flannel.
 - docker registry runs with "--insecure-registry"
 - No DevOps tools used, just straight kickstart.<sup name="a5">[5](#f5)</sup> So if you've seen the Stacki+Kubernetes+Salt video demo, that's not valid anymore. Salt is not in Stacki unless you put it there. 
 - The only service running in a container is a docker registry if you want it.
+- No Ubuntu. Not yet anyway. Should be coming in the next release. 
 
 ## Installing Kubernetes
 
@@ -136,6 +142,7 @@ The installation of Kubernetes and subsequent deployment of you cluster requires
 * The stacki-docker pallet
 * The stacki-kubernetes pallet
 * The CentOS-7.3 and CentOS-Updates pallets.
+* Or RHEL 7.3 or Oracle Linux 7.3 or Scientfic Linux 7.3. They should all work. 
 
 Luckily, we have made this easy for you.
 
@@ -153,8 +160,8 @@ If downloading to the frontend:
 
 # wget --no-check-certificate https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-7-x86_64-Everything-111.iso 
 # wget --no-check-certificate https://s3.amazonaws.com/stacki/public/os/centos/7/CentOS-Updates-7.3-7.x.x86_64.disk1.iso
-# wget --no-check-certificate https://s3.amazonaws.com/stacki/public/pallets/3.2/open-source/stacki-docker-17.03.0-3.2_phase2.x86_64.disk1.iso 
-# wget --no-check-certificate http://stacki.s3.amazonaws.com/public/pallets/3.2/open-source/stacki-kubernetes-1.5.4-7.x_p2.x86_64.disk1.iso 
+# wget --no-check-certificate https://s3.amazonaws.com/stacki/public/pallets/4.0/open-source/stacki-docker-17.03.1-7.x_phase2.x86_64.disk1.iso 
+# wget --no-check-certificate https://s3.amazonaws.com/stacki/public/pallets/4.0/open-source/stacki-kubernetes-1.6.2-7.x_phase2.x86_64.disk1.iso
 ```
 
 Either all at once or one at a time.
@@ -171,17 +178,17 @@ to make sure everything is present.
 Then enable the pallets
 # stack enable pallet CentOS CentOS-Updates stacki-docker stacki-kubernetes
 
-You MUST disable the OS pallet:
+You MUST disable the OS pallet if you have it.
 
 # stack disable pallet os
 
 ```
 
-A pallet generally has both frontend and backend configuration. To get the frontend configuration to happen for a pallet that contains it. The stacki-kubernetes pallet needs to be run; however, the stacki-docker pallet should not be run. The stacki-docker pallet does double duty: it provides docker for stacki-kubernetes, and it can be used without stacki-kubernetes. You only run the stacki-docker pallet if it is NOT being used with stacki-kubernetes.
+A pallet generally has both frontend and backend configuration. To get the frontend configuration to happen for a pallet that contains it, the stacki-kubernetes pallet needs to be run; however, ***the stacki-docker pallet should not be run.*** The stacki-docker pallet does double duty: it provides docker for stacki-kubernetes, and it can be used without stacki-kubernetes. You only run the stacki-docker pallet if it is NOT being used with stacki-kubernetes.
 
 Did you get that. Let me say it again, only louder.
 
-*** Do not run the stacki-docker pallet ***
+*** Do not run the stacki-docker pallet! ***
 
 But you should run the stacki-kubernetes pallet, like this:
 
@@ -214,39 +221,30 @@ I've included a few spreadsheets for you to adopt/adapt/disregard. These should 
 So let's go find them and look at them.
 
 ```
-# cd /export/stack/spreadsheets/examples/
+# cd /opt/stack/share/examples/spreadsheets/kubernetes/
 
-# ls -1
-full-kubernetes-attrs.csv
-global-kubernetes-attrs.csv
-hosts-kubernetes-attrs.csv
-kubernetes-partitions.csv
+# ls
+stacki-kubernetes-1.6.2-kubernetes-attrs.csv
+stacki-kubernetes-1.6.2-kubernetes-partitions.csv
 ```
 
-I'll explain the files, and then we'll go into further detail on the attributes because you will/may want to change attributes for your cluster.
+We're going to work with the stacki-kubernetes-1.6.2-kubernetes-attrs.csv for our explanation. 
 
-The global-kubernetes-attrs.csv contains only attributes at a global level. It's easier to see if you just have to deal with one line of keys and values.
-
-The hosts-kubernetes-attrs.csv shows the changes for our example backend nodes without the global values being defined. Again easier to see.
-
-The full-kubernetes-attrs.csv file is the combined hosts-kubernetes-attrs.csv and global-kubernetes-attrs.csv files. Not as easy to see, but easier to use because you take care of everything all at once. 
-
-The kubernetes-partitions.csv file will be used for partitioning. We use overlay fs for Docker and that needs a little extra something to get it to work with Docker correctly. 
-
-We're going to work with the full-kubernetes-attrs.csv for our explanation. 
+The stacki-kubernetes-1.6.2-kubernetes-partitions.csv file will be used for partitioning. We use overlay fs for Docker and that needs a little extra something to get it to work with Docker correctly. 
 
 Open it with your favorite editor <sup name="a7">[7](#f7)</sup>, Excel/Libre Office/Google Spreadsheets
 
 It looks like this:
 
-| target      | kube.secure | kube.master | kube.master_ip | kube.minion | etcd.prefix     | etcd.cluster_member | kube.enable_dashboard | kube.pull_pods | kube.pod_dir            | docker.registry.local | docker.registry.external | sync.hosts | kube.spark_demo | 
-|-------------|-------------|-------------|----------------|-------------|-----------------|---------------------|-----------------------|----------------|-------------------------|-----------------------|--------------------------|------------|-----------------| 
-| global      | True        | False       | 10.1.255.254   | True        | /stacki/network | False               | False                 | True           | install/kubernetes/pods | True                  | False                    | True       | True            | 
-| backend-0-0 |             | True        |                |             |                 | True                | True                  |                |                         |                       |                          |            |                 | 
-| backend-0-1 |             |             |                |             |                 | True                |                       |                |                         |                       |                          |            |                 | 
-| backend-0-2 |             |             |                |             |                 | True                |                       |                |                         |                       |                          |            |                 | 
-| backend-0-3 |             |             |                |             |                 |                     |                       |                |                         |                       |                          |            |                 | 
-| backend-0-4 |             |             |                |             |                 |                     |                       |                |                         |                       |                          |            |                 | 
+| target      | kube.secure | kube.master | kube.master_ip | kube.minion | etcd.prefix     | etcd.cluster_member | kube.enable_dashboard | kube.pull_pods | kube.pod_dir            | docker.registry.local | docker.registry.external | sync.hosts | kube.spark_demo | kube.domain | 
+|-------------|-------------|-------------|----------------|-------------|-----------------|---------------------|-----------------------|----------------|-------------------------|-----------------------|--------------------------|------------|-----------------|-------------| 
+| global      | True        | False       | 10.1.255.254   | True        | /stacki/network | False               | False                 | True           | install/kubernetes/pods | True                  | False                    | True       | False           | k8s.cluster | 
+| backend-0-0 |             | True        |                |             |                 | True                | True                  |                |                         |                       |                          |            | True            |             | 
+| backend-0-1 |             |             |                |             |                 | True                |                       |                |                         |                       |                          |            |                 |             | 
+| backend-0-2 |             |             |                |             |                 | True                |                       |                |                         |                       |                          |            |                 |             | 
+| backend-0-3 |             |             |                |             |                 |                     |                       |                |                         |                       |                          |            |                 |             | 
+| backend-0-4 |             |             |                |             |                 |                     |                       |                |                         |                       |                          |            |                 |             | 
+
 
 
 The goal here is to edit this file so that it reflects your site and needs, not mine. Since there isn't currently a page to describe attributes and what they are used for, I will do so here.
@@ -280,7 +278,7 @@ The next five lines are applicable to only the name of the node at the beginning
 To add the attributes you load the attrfile after you edit it:
 
 ```
-# stack load attrfile file=full-kubernets-attrs.csv
+# stack load attrfile file=stacki-1.6.2-kubernetes-attrs.csv
 ```
 
 You can also add/set attributes on the command line. The above file would look like this if we did it on the command line instead:
@@ -306,7 +304,8 @@ You can also add/set attributes on the command line. The above file would look l
 # stack add host attr backend-0-2 attr=etcd.cluster_member value=True
 ```
 
-You can use "set" instead of "add." If the attribute doesn't exist if you use "set," it will be created. "add" just adds and sets.
+You can use "set" instead of "add." If the attribute doesn't exist and if you use "set," the attribute will be created. "add" just adds and sets.
+
 Use "set" when you want to change an attribute but don't want to reload the attr file.
 
 ###### Kubernetes file detail
@@ -437,7 +436,16 @@ Host change: Global - set to false if you don't want it.
 
 I do this because I do demos, lots and lots of demos. Set it to false. It's pretty though.
 
-There is one other attribute you have to set by hand, because adding it in spreadsheet doesn't work. I believe this is fixed in stacki 4.0 however. Kubernetes needs a network for containers to live in/on and we want to define that:
+```
+Target = kube.domain
+Global Value = k8s.local
+Used for: DNS domain name for containers.
+Host change: Global, set it to something else if you want. This should be used by the kube-dns service. It's not working right now. Don't worry about messing with this. 
+```
+
+There is one other attribute you have to set by hand, because adding it in spreadsheet doesn't work. Kubernetes needs a network for containers to live in/on and we want to define that:
+
+***If you don't do this, nothing will work. Nothing. Nada. Zip. Zilch. Bupkis.***
 
 ```
 stack set attr attr=kube.network value='{ "Network": "172.16.0.0/16", "SubnetLen": 24, "SubnetMin": "172.16.1.0", "SubnetMax": "172.16.254.0", "Backend": { "Type": "udp", "Port": 7890 } }'
@@ -447,7 +455,7 @@ Feel free to change the ip schema before you run that command.
 
 ##### Docker - we have to talk
 
-The Docker registry runs insecurely in Phase
+The Docker registry runs insecurely in Phase 2. I'll eventually change that, I'm looking for use cases here before I do. So speak up. 
 
 Okay, with Docker there are two options: if no nodes don't have internet access, or if at least the frontend has internet access.
 
@@ -505,7 +513,9 @@ Reboot your nodes. Wait.
 
 * Access
 
-Yeah access on bare metal is funky because there's no automatic loadbalancer that multiplexes the pods to the external world. AWS and GCE both do this but that's because they way their hands and invoke incantations. It's magic and they don't care if you think that. There are a couple of ways to get to the dashboard
+Yeah access on bare metal is funky because there's no automatic loadbalancer that multiplexes the pods to the external world. AWS and GCE both do this but that's because they wave their hands and invoke incantations. Those three witches in Macbeth? Yeah, employees 11,12, and 13. It's magic and they don't care if you think that. 
+
+There are a couple of ways to get to the dashboard:
 
 - Path 1
 ```
@@ -638,6 +648,8 @@ For Zeppelin workbook UI
 ##### Monitoring
 
 I've created a stacki-prometheus pallet that runs Prometheus/Grafana on the frontend with some default dashboards for bare metal, Kubernetes, and Docker. Follow the [stacki-prometheus README.md](https://github.com/StackIQ/stacki-prometheus) to add monitoring to your kubernetes infrastructure. 
+
+You should be able to get to Grafana at https://your.front.end.ip:3000 and prometheus at https://your.front.end.ip:9090.
 
 ##### Proposed changes in no particular order
 * You oughta be able to install with CoreOS too.
