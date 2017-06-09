@@ -28,11 +28,16 @@ build::
 install::
 	mkdir -p $(ROOT)$(PKGROOT)
 	mkdir -p $(ROOT)$(SHAREDOCDIR)
+	mkdir -p $(ROOT)/$(PKGROOT)/share/licenses/
 	tar -xf $(TGZNAME)
 	
 	$(INSTALL) -m0755 $(TARDIR)/etcd $(ROOT)$(PKGROOT)
 	$(INSTALL) -m0755 $(TARDIR)/etcdctl $(ROOT)$(PKGROOT)
 	cp $(TARDIR)/README* $(ROOT)$(SHAREDOCDIR)
 	cp -a $(TARDIR)/Documentation/* $(ROOT)$(SHAREDOCDIR)
+	( \
+		cd LICENSE; \
+		find . -type f | cpio -pudv $(ROOT)/$(PKGROOT)/share/licenses/; \
+	)
 
 clean::

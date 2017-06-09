@@ -30,9 +30,15 @@ install::
 	mkdir -p $(ROOT)$(PKGROOT)
 	mkdir -p $(ROOT)$(SHAREDIR)
 	mkdir -p $(ROOT)$(SHAREDOCDIR)
+	mkdir -p $(ROOT)/$(PKGROOT)/share/licenses/
 	
 	$(INSTALL) -m0755 flanneld $(ROOT)$(PKGROOT)
 	$(INSTALL) -m0644 mk-docker-opts.sh $(ROOT)$(SHAREDIR)
 	$(INSTALL) -m0644 README.md $(ROOT)$(SHAREDOCDIR)
+
+	( \
+		cd LICENSE; \
+		find . -type f | cpio -pudv $(ROOT)/$(PKGROOT)/share/licenses/; \
+	)
 
 clean::
